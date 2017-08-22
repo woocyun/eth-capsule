@@ -19,7 +19,7 @@ class App extends Component {
     this.state = {
       currentBlock: 0,
       inputValue: 0,
-      storageValue: 0,
+      depositedValue: 0,
       web3: null,
       account: null,
       simpleStorageInstance: null
@@ -29,16 +29,15 @@ class App extends Component {
     this.getAccounts = this.getAccounts.bind(this);
     this.getBalance = this.getBalance.bind(this);
     this.instantiateContract = this.instantiateContract.bind(this);
+    this.getDepositedValue = this.getDepositedValue.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleSubmit = this.handleSubmit.bind(this);
+    this.runBlockChecker = this.runBlockChecker.bind(this);
   }
 
   componentWillMount() {
     this.getWeb3()
-      .then(web3 => {
-        this.setState({ web3 });
-        this.runBlockChecker();
-      })
+      .then(this.runBlockChecker)
       .then(this.getAccounts)
       .then(accounts => {
         this.setState({ account: accounts[0] });
@@ -47,7 +46,8 @@ class App extends Component {
       .then(balance => {
         this.setState({ balance });
       })
-      .then(this.instantiateContract);
+      .then(this.instantiateContract)
+      .then(this.getDepositedValue);
   }
 
   getWeb3() {
@@ -55,7 +55,6 @@ class App extends Component {
       .then(({ web3 }) => {
         window.web3 = web3;
         this.setState({ web3 });
-        return web3;
       })
       .catch(err => {
         console.log('Error finding web3.');
@@ -99,25 +98,26 @@ class App extends Component {
     });
   }
 
+  getDepositedValue() {
+    return this.state.simpleStorageContractInstance.getDepositorInfo.call()
+      .then(response => {
+        this.setState({ depositedValue: response.toNumber() });
+      });
+  }
+
   handleChange(evt, newVal) {
     this.setState({ inputValue: newVal });
   }
 
   handleSubmit() {
-    this.state.simpleStorageContractInstance.set(this.state.inputValue, { from: this.state.account })
+    this.state.simpleStorageContractInstance.deposit({ from: this.state.account, value: this.state.inputValue })
       .then(response => {
-        console.log(response);
-
-        this.state.simpleStorageContractInstance.get.call()
-          .then(result => {
-            const storageValue = result.toNumber();
-            this.setState({ storageValue });
-          });
-        
         this.getBalance()
           .then(balance => {
             this.setState({ balance });
           });
+        
+        this.getDepositedValue();
       });
   }
 
@@ -129,13 +129,6 @@ class App extends Component {
     return simpleStorageContract.deployed()
       .then((instance) => {
         this.setState({ simpleStorageContractInstance: instance });
-      })
-      .then(() => {
-        this.state.simpleStorageContractInstance.get.call()
-          .then(result => {
-            const storageValue = result.toNumber();
-            this.setState({ storageValue, inputValue: storageValue  });
-          });
       });
   }
 
@@ -154,7 +147,7 @@ class App extends Component {
       balance,
       currentBlock,
       inputValue,
-      storageValue,
+      depositedValue,
       web3
     } = this.state;
 
@@ -173,7 +166,7 @@ class App extends Component {
               Your MetaMask balance: {web3 ? web3.fromWei(balance, 'ether').toString() : 0}
             </p>
             <p>
-              Storage Value: {storageValue}
+              Your Deposited Value: {depositedValue} Wei / {web3 ? web3.fromWei(depositedValue, 'ether').toString() : 0} Ether
             </p>
             <p>
               Current Block: {currentBlock}
@@ -183,7 +176,7 @@ class App extends Component {
             >
               <div>
                 <TextField
-                  floatingLabelText="Number to Store"
+                  floatingLabelText="Amount to Deposit"
                   type="number"
                   value={inputValue}
                   onChange={this.handleChange}
@@ -192,7 +185,7 @@ class App extends Component {
               <br />
               <div>
                 <RaisedButton
-                  label="Change"
+                  label="Deposit"
                   primary={true}
                   onClick={this.handleSubmit}
                 />
