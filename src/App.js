@@ -1,92 +1,205 @@
 import React, { Component } from 'react'
+
 import SimpleStorageContract from '../build/contracts/SimpleStorage.json'
 import getWeb3 from './utils/getWeb3'
+import contract from 'truffle-contract';
 
-import './css/oswald.css'
-import './css/open-sans.css'
-import './css/pure-min.css'
-import './App.css'
+import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
+import AppBar from 'material-ui/AppBar';
+import Paper from 'material-ui/Paper';
+import RaisedButton from 'material-ui/RaisedButton';
+import TextField from 'material-ui/TextField';
+
+import './App.css';
 
 class App extends Component {
   constructor(props) {
     super(props)
 
     this.state = {
+      currentBlock: 0,
+      inputValue: 0,
       storageValue: 0,
-      web3: null
-    }
+      web3: null,
+      account: null,
+      simpleStorageInstance: null
+    };
+
+    this.getWeb3 = this.getWeb3.bind(this);
+    this.getAccounts = this.getAccounts.bind(this);
+    this.getBalance = this.getBalance.bind(this);
+    this.instantiateContract = this.instantiateContract.bind(this);
+    this.handleChange = this.handleChange.bind(this);
+    this.handleSubmit = this.handleSubmit.bind(this);
   }
 
   componentWillMount() {
-    // Get network provider and web3 instance.
-    // See utils/getWeb3 for more info.
-
-    getWeb3
-    .then(results => {
-      this.setState({
-        web3: results.web3
+    this.getWeb3()
+      .then(web3 => {
+        this.setState({ web3 });
+        this.runBlockChecker();
       })
+      .then(this.getAccounts)
+      .then(accounts => {
+        this.setState({ account: accounts[0] });
+      })
+      .then(this.getBalance)
+      .then(balance => {
+        this.setState({ balance });
+      })
+      .then(this.instantiateContract);
+  }
 
-      // Instantiate contract once web3 provided.
-      this.instantiateContract()
-    })
-    .catch(() => {
-      console.log('Error finding web3.')
-    })
+  getWeb3() {
+    return getWeb3
+      .then(({ web3 }) => {
+        window.web3 = web3;
+        this.setState({ web3 });
+        return web3;
+      })
+      .catch(err => {
+        console.log('Error finding web3.');
+        throw err;
+      });
+  }
+
+  getAccounts() {
+    return new Promise((resolve, reject) => {
+      this.state.web3.eth.getAccounts((err, accounts) => {
+        if (!err) {
+          resolve(accounts);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
+
+  getBalance() {
+    return new Promise((resolve, reject) => {
+      this.state.web3.eth.getBalance(this.state.account, undefined, (err, balance) => {
+        if (!err) {
+          resolve(balance);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
+
+  getBlockNumber() {
+    return new Promise((resolve, reject) => {
+      this.state.web3.eth.getBlockNumber((err, number) => {
+        if (!err) {
+          resolve(number);
+        } else {
+          reject(err);
+        }
+      });
+    });
+  }
+
+  handleChange(evt, newVal) {
+    this.setState({ inputValue: newVal });
+  }
+
+  handleSubmit() {
+    this.state.simpleStorageContractInstance.set(this.state.inputValue, { from: this.state.account })
+      .then(response => {
+        console.log(response);
+
+        this.state.simpleStorageContractInstance.get.call()
+          .then(result => {
+            const storageValue = result.toNumber();
+            this.setState({ storageValue });
+          });
+        
+        this.getBalance()
+          .then(balance => {
+            this.setState({ balance });
+          });
+      });
   }
 
   instantiateContract() {
-    /*
-     * SMART CONTRACT EXAMPLE
-     *
-     * Normally these functions would be called in the context of a
-     * state management library, but for convenience I've placed them here.
-     */
+    const simpleStorageContract = contract(SimpleStorageContract);
 
-    const contract = require('truffle-contract')
-    const simpleStorage = contract(SimpleStorageContract)
-    simpleStorage.setProvider(this.state.web3.currentProvider)
+    simpleStorageContract.setProvider(this.state.web3.currentProvider);
 
-    // Declaring this for later so we can chain functions on SimpleStorage.
-    var simpleStorageInstance
-
-    // Get accounts.
-    this.state.web3.eth.getAccounts((error, accounts) => {
-      simpleStorage.deployed().then((instance) => {
-        simpleStorageInstance = instance
-
-        // Stores a given value, 5 by default.
-        return simpleStorageInstance.set(5, {from: accounts[0]})
-      }).then((result) => {
-        // Get the value from the contract to prove it worked.
-        return simpleStorageInstance.get.call(accounts[0])
-      }).then((result) => {
-        // Update state with the result.
-        return this.setState({ storageValue: result.c[0] })
+    return simpleStorageContract.deployed()
+      .then((instance) => {
+        this.setState({ simpleStorageContractInstance: instance });
       })
-    })
+      .then(() => {
+        this.state.simpleStorageContractInstance.get.call()
+          .then(result => {
+            const storageValue = result.toNumber();
+            this.setState({ storageValue, inputValue: storageValue  });
+          });
+      });
+  }
+
+  runBlockChecker() {
+    setInterval(() => {
+      this.getBlockNumber()
+        .then(number => {
+          this.setState({ currentBlock: number });
+        });
+    }, 5000);
   }
 
   render() {
-    return (
-      <div className="App">
-        <nav className="navbar pure-menu pure-menu-horizontal">
-            <a href="#" className="pure-menu-heading pure-menu-link">Truffle Box</a>
-        </nav>
+    const {
+      account,
+      balance,
+      currentBlock,
+      inputValue,
+      storageValue,
+      web3
+    } = this.state;
 
-        <main className="container">
-          <div className="pure-g">
-            <div className="pure-u-1-1">
-              <h1>Good to Go!</h1>
-              <p>Your Truffle Box is installed and ready.</p>
-              <h2>Smart Contract Example</h2>
-              <p>If your contracts compiled and migrated successfully, below will show a stored value of 5 (by default).</p>
-              <p>Try changing the value stored on <strong>line 59</strong> of App.js.</p>
-              <p>The stored value is: {this.state.storageValue}</p>
-            </div>
+    return (
+        <MuiThemeProvider>
+          <div className="App">
+            <AppBar
+              title="Eth Capsule"
+              titleStyle={{ fontWeight: 100 }}
+              iconStyleLeft={{ display: 'none' }}
+            />
+            <p>
+              Your MetaMask account: {account}
+            </p>
+            <p>
+              Your MetaMask balance: {web3 ? web3.fromWei(balance, 'ether').toString() : 0}
+            </p>
+            <p>
+              Storage Value: {storageValue}
+            </p>
+            <p>
+              Current Block: {currentBlock}
+            </p>
+            <Paper
+              style={{ maxWidth: 800, margin: 'auto', textAlign: 'center', padding: 20 }}
+            >
+              <div>
+                <TextField
+                  floatingLabelText="Number to Store"
+                  type="number"
+                  value={inputValue}
+                  onChange={this.handleChange}
+                />
+              </div>
+              <br />
+              <div>
+                <RaisedButton
+                  label="Change"
+                  primary={true}
+                  onClick={this.handleSubmit}
+                />
+              </div>
+            </Paper>
           </div>
-        </main>
-      </div>
+        </MuiThemeProvider>
     );
   }
 }
