@@ -26,6 +26,8 @@ const HeadToolbar = (props) => {
           }
         >
           <MenuItem primaryText="Your Capsules" />
+          <MenuItem primaryText="Bury a Capsule" />
+          <MenuItem primaryText="Dig up a Capsule" />
           <MenuItem primaryText="Instructions" />
           <MenuItem primaryText="FAQ" />
           <MenuItem primaryText="Contract" />

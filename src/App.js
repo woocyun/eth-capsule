@@ -1,4 +1,5 @@
 import React, { Component } from 'react'
+import { Route } from 'react-router-dom'
 import moment from 'moment';
 import EthCapsuleContract from '../build/contracts/EthCapsule.json'
 import getWeb3 from './utils/getWeb3'
@@ -233,6 +234,56 @@ class App extends Component {
       web3
     } = this.state;
 
+    const capsuleListComponent = () => {
+      return (
+        <CapsuleList
+          capsules={capsules}
+          capsulesLoading={capsulesLoading}
+          web3={web3}
+        />
+      );
+    };
+
+    const createComponent = () => {
+      return (
+        <div>
+          <div>
+            <DatePicker
+              hintText="Date to bury ether until"
+              value={dateValue}
+              onChange={this.handleDateSelect}
+            />
+          </div>
+          <br />
+          <div>
+            <TimePicker
+              format="ampm"
+              hintText="Time of day to bury ether until"
+              value={timeValue}
+              onChange={this.handleTimeSelect}
+            />
+          </div>
+          <br />
+          <div>
+            <TextField
+              floatingLabelText="Amount to Deposit"
+              type="number"
+              value={inputValue}
+              onChange={this.handleChange}
+            />
+          </div>
+          <br />
+          <div>
+            <RaisedButton
+              label="Deposit"
+              primary={true}
+              onClick={this.handleDeposit}
+            />
+          </div>
+        </div>
+      );
+    };
+
     return (
         <MuiThemeProvider>
           <div className="App">
@@ -246,44 +297,8 @@ class App extends Component {
             >
               <HeadToolbar
               />
-              <CapsuleList
-                capsules={capsules}
-                capsulesLoading={capsulesLoading}
-                web3={web3}
-              />
-              {/* <div>
-                <DatePicker
-                  hintText="Date to bury ether until"
-                  value={dateValue}
-                  onChange={this.handleDateSelect}
-                />
-              </div>
-              <br />
-              <div>
-                <TimePicker
-                  format="ampm"
-                  hintText="Time of day to bury ether until"
-                  value={timeValue}
-                  onChange={this.handleTimeSelect}
-                />
-              </div>
-              <br />
-              <div>
-                <TextField
-                  floatingLabelText="Amount to Deposit"
-                  type="number"
-                  value={inputValue}
-                  onChange={this.handleChange}
-                />
-              </div>
-              <br />
-              <div>
-                <RaisedButton
-                  label="Deposit"
-                  primary={true}
-                  onClick={this.handleDeposit}
-                />
-              </div> */}
+              <Route exact path="/" component={capsuleListComponent} />
+              <Route path="/create" component={createComponent} />
             </Paper>
             <p>
               Your MetaMask account: {account}
