@@ -1,5 +1,5 @@
 import React, { Component } from 'react'
-
+import moment from 'moment';
 import EthCapsuleContract from '../build/contracts/EthCapsule.json'
 import getWeb3 from './utils/getWeb3'
 import contract from 'truffle-contract';
@@ -11,6 +11,7 @@ import RaisedButton from 'material-ui/RaisedButton';
 import TextField from 'material-ui/TextField';
 import { List, ListItem } from 'material-ui/List';
 import DatePicker from 'material-ui/DatePicker';
+import TimePicker from 'material-ui/TimePicker';
 
 import './App.css';
 
@@ -23,6 +24,7 @@ class App extends Component {
       currentBlock: 0,
       inputValue: 0,
       dateValue: null,
+      timeValue: null,
       depositedValue: 0,
       web3: null,
       account: null,
@@ -37,6 +39,7 @@ class App extends Component {
     this.instantiateContract = this.instantiateContract.bind(this);
     this.handleChange = this.handleChange.bind(this);
     this.handleDateSelect = this.handleDateSelect.bind(this);
+    this.handleTimeSelect = this.handleTimeSelect.bind(this);
     this.handleDeposit = this.handleDeposit.bind(this);
     this.getNumberOfCapsules = this.getNumberOfCapsules.bind(this);
     this.getCapsuleInfo = this.getCapsuleInfo.bind(this);
@@ -134,21 +137,26 @@ class App extends Component {
   }
 
   handleDateSelect(ignore, dateValue) {
-    console.log(dateValue);
     this.setState({
       dateValue
     });
   }
 
+  handleTimeSelect(ignore, timeValue) {
+    this.setState({
+      timeValue
+    });
+  }
+
   handleDeposit() {
-    console.log(`burying ${this.state.web3.toWei(this.state.inputValue, 'ether')} from ${this.state.account}`);
-    console.log(`lock until ${this.state.dateValue}. duration is ${new Date((this.state.dateValue).valueOf() - new Date()) / 1000}`);
-    this.state.contractInstance.bury(new Date((this.state.dateValue).valueOf() - new Date()) / 1000, {
-      from: this.state.account,
-      value: this.state.web3.toWei(this.state.inputValue, 'ether'),
-      gas: 3000000,
-      gasPrice: 1000
-    })
+    this.state.contractInstance.bury(
+      new Date(new Date(moment(this.state.dateValue).format('ddd MMM DD YYYY') + ' ' + moment(this.state.timeValue).format('HH:mm:ss')) - new Date()) / 1000,
+      {
+        from: this.state.account,
+        value: this.state.web3.toWei(this.state.inputValue, 'ether'),
+        gas: 3000000,
+        gasPrice: 1000
+      })
       .then(response => {
         console.log(response);
         this.getBalance()
@@ -215,6 +223,7 @@ class App extends Component {
       contractValue,
       currentBlock,
       dateValue,
+      timeValue,
       inputValue,
       web3
     } = this.state;
@@ -246,7 +255,11 @@ class App extends Component {
                 <List>
                   {capsules.map((capsule, idx) => (
                     <ListItem
-                      primaryText={`value: ${web3.fromWei(capsule.value, 'ether')} / lockTime: ${capsule.lockTime} / duration: ${capsule.duration} / unlockTime: ${capsule.unlockTime}`}
+                      primaryText={`
+                        ${web3.fromWei(capsule.value, 'ether')} ether
+                        : ${moment(capsule.lockTime * 1000).format('MMM Do YYYY(h:mm:ss a)')}
+                        - ${moment(capsule.unlockTime * 1000).format('MMM Do YYYY(h:mm:ss a)')}`
+                      }
                       key={idx}
                     />
                   ))}
@@ -257,6 +270,15 @@ class App extends Component {
                   hintText="Date to bury ether until"
                   value={dateValue}
                   onChange={this.handleDateSelect}
+                />
+              </div>
+              <br />
+              <div>
+                <TimePicker
+                  format="ampm"
+                  hintText="Time of day to bury ether until"
+                  value={timeValue}
+                  onChange={this.handleTimeSelect}
                 />
               </div>
               <br />
