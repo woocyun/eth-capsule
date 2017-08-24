@@ -5,6 +5,7 @@ import MenuItem from 'material-ui/MenuItem';
 import IconMenu from 'material-ui/IconMenu';
 import IconButton from 'material-ui/IconButton';
 import NavigationExpandMoreIcon from 'material-ui/svg-icons/navigation/expand-more';
+import { Link } from 'react-router-dom'
 
 const HeadToolbar = (props) => {
   // const {
@@ -25,8 +26,17 @@ const HeadToolbar = (props) => {
             </IconButton>
           }
         >
-          <MenuItem primaryText="Your Capsules" />
-          <MenuItem primaryText="Bury a Capsule" />
+          <MenuItem primaryText={
+            <Link to="/">
+              Capsules
+            </Link>
+          }/>
+          <MenuItem primaryText={
+            <Link to="/create">
+              Bury a Capsule
+            </Link>
+          }>
+          </MenuItem>
           <MenuItem primaryText="Dig up a Capsule" />
           <MenuItem primaryText="Instructions" />
           <MenuItem primaryText="FAQ" />

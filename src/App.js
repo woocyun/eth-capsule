@@ -10,13 +10,10 @@ import './App.css';
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import AppBar from 'material-ui/AppBar';
 import Paper from 'material-ui/Paper';
-import RaisedButton from 'material-ui/RaisedButton';
-import TextField from 'material-ui/TextField';
-import DatePicker from 'material-ui/DatePicker';
-import TimePicker from 'material-ui/TimePicker';
 
 import HeadToolbar from './components/HeadToolbar';
 import CapsuleList from './components/CapsuleList';
+import CreateCapsule from './components/CreateCapsule';
 
 class App extends Component {
   constructor(props) {
@@ -25,7 +22,7 @@ class App extends Component {
     this.state = {
       contractValue: 0,
       currentBlock: 0,
-      inputValue: 0,
+      depositValue: 0,
       dateValue: null,
       timeValue: null,
       depositedValue: 0,
@@ -41,7 +38,7 @@ class App extends Component {
     this.getBalance = this.getBalance.bind(this);
     this.setBalance = this.setBalance.bind(this);
     this.instantiateContract = this.instantiateContract.bind(this);
-    this.handleChange = this.handleChange.bind(this);
+    this.handleDepositChange = this.handleDepositChange.bind(this);
     this.handleDateSelect = this.handleDateSelect.bind(this);
     this.handleTimeSelect = this.handleTimeSelect.bind(this);
     this.handleDeposit = this.handleDeposit.bind(this);
@@ -135,8 +132,8 @@ class App extends Component {
     });
   }
 
-  handleChange(evt, newVal) {
-    this.setState({ inputValue: newVal });
+  handleDepositChange(evt, newVal) {
+    this.setState({ depositValue: newVal });
   }
 
   handleDateSelect(ignore, dateValue) {
@@ -156,7 +153,7 @@ class App extends Component {
       new Date(new Date(moment(this.state.dateValue).format('ddd MMM DD YYYY') + ' ' + moment(this.state.timeValue).format('HH:mm:ss')) - new Date()) / 1000,
       {
         from: this.state.account,
-        value: this.state.web3.toWei(this.state.inputValue, 'ether'),
+        value: this.state.web3.toWei(this.state.depositValue, 'ether'),
         gas: 3000000,
         gasPrice: 1000
       })
@@ -230,7 +227,7 @@ class App extends Component {
       currentBlock,
       dateValue,
       timeValue,
-      inputValue,
+      depositValue,
       web3
     } = this.state;
 
@@ -246,42 +243,16 @@ class App extends Component {
 
     const createComponent = () => {
       return (
-        <div>
-          <div>
-            <DatePicker
-              hintText="Date to bury ether until"
-              value={dateValue}
-              onChange={this.handleDateSelect}
-            />
-          </div>
-          <br />
-          <div>
-            <TimePicker
-              format="ampm"
-              hintText="Time of day to bury ether until"
-              value={timeValue}
-              onChange={this.handleTimeSelect}
-            />
-          </div>
-          <br />
-          <div>
-            <TextField
-              floatingLabelText="Amount to Deposit"
-              type="number"
-              value={inputValue}
-              onChange={this.handleChange}
-            />
-          </div>
-          <br />
-          <div>
-            <RaisedButton
-              label="Deposit"
-              primary={true}
-              onClick={this.handleDeposit}
-            />
-          </div>
-        </div>
-      );
+        <CreateCapsule
+          dateValue={dateValue}
+          timeValue={timeValue}
+          depositValue={depositValue}
+          onDateSelect={this.handleDateSelect}
+          onTimeSelect={this.handleTimeSelect}
+          onDeposit={this.handleDeposit}
+          onDepositChange={this.handleDepositChange}
+        />
+      )
     };
 
     return (
