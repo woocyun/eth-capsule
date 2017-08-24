@@ -10,6 +10,7 @@ import Paper from 'material-ui/Paper';
 import RaisedButton from 'material-ui/RaisedButton';
 import TextField from 'material-ui/TextField';
 import { List, ListItem } from 'material-ui/List';
+import DatePicker from 'material-ui/DatePicker';
 
 import './App.css';
 
@@ -21,6 +22,7 @@ class App extends Component {
       contractValue: 0,
       currentBlock: 0,
       inputValue: 0,
+      dateValue: null,
       depositedValue: 0,
       web3: null,
       account: null,
@@ -34,6 +36,7 @@ class App extends Component {
     this.setBalance = this.setBalance.bind(this);
     this.instantiateContract = this.instantiateContract.bind(this);
     this.handleChange = this.handleChange.bind(this);
+    this.handleDateSelect = this.handleDateSelect.bind(this);
     this.handleDeposit = this.handleDeposit.bind(this);
     this.getNumberOfCapsules = this.getNumberOfCapsules.bind(this);
     this.getCapsuleInfo = this.getCapsuleInfo.bind(this);
@@ -130,9 +133,17 @@ class App extends Component {
     this.setState({ inputValue: newVal });
   }
 
+  handleDateSelect(ignore, dateValue) {
+    console.log(dateValue);
+    this.setState({
+      dateValue
+    });
+  }
+
   handleDeposit() {
     console.log(`burying ${this.state.web3.toWei(this.state.inputValue, 'ether')} from ${this.state.account}`);
-    this.state.contractInstance.bury(9999, {
+    console.log(`lock until ${this.state.dateValue}. duration is ${new Date((this.state.dateValue).valueOf() - new Date()) / 1000}`);
+    this.state.contractInstance.bury(new Date((this.state.dateValue).valueOf() - new Date()) / 1000, {
       from: this.state.account,
       value: this.state.web3.toWei(this.state.inputValue, 'ether'),
       gas: 3000000,
@@ -170,12 +181,11 @@ class App extends Component {
   getCapsuleInfo(capsuleNumber) {
     return this.state.contractInstance.getCapsuleInfo(capsuleNumber)
       .then(response => {
-        console.log(`capsule ${capsuleNumber}:`);
-        console.log(response[0].toNumber());
-        console.log(response[1].toNumber());
         return {
           value: response[0].toNumber(),
-          lockTime: response[1].toNumber()
+          lockTime: response[1].toNumber(),
+          duration: response[2].toNumber(),
+          unlockTime: response[3].toNumber()
         };
       });
   }
@@ -204,6 +214,7 @@ class App extends Component {
       capsules,
       contractValue,
       currentBlock,
+      dateValue,
       inputValue,
       web3
     } = this.state;
@@ -235,12 +246,20 @@ class App extends Component {
                 <List>
                   {capsules.map((capsule, idx) => (
                     <ListItem
-                      primaryText={`Value: ${web3.fromWei(capsule.value, 'ether')} / Lock Time: ${capsule.lockTime} / Opened: ${capsule.opened}`}
+                      primaryText={`value: ${web3.fromWei(capsule.value, 'ether')} / lockTime: ${capsule.lockTime} / duration: ${capsule.duration} / unlockTime: ${capsule.unlockTime}`}
                       key={idx}
                     />
                   ))}
                 </List>
               </div>
+              <div>
+                <DatePicker
+                  hintText="Date to bury ether until"
+                  value={dateValue}
+                  onChange={this.handleDateSelect}
+                />
+              </div>
+              <br />
               <div>
                 <TextField
                   floatingLabelText="Amount to Deposit"
