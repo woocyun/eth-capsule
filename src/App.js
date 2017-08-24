@@ -4,16 +4,18 @@ import EthCapsuleContract from '../build/contracts/EthCapsule.json'
 import getWeb3 from './utils/getWeb3'
 import contract from 'truffle-contract';
 
+import './App.css';
+
 import MuiThemeProvider from 'material-ui/styles/MuiThemeProvider';
 import AppBar from 'material-ui/AppBar';
 import Paper from 'material-ui/Paper';
 import RaisedButton from 'material-ui/RaisedButton';
 import TextField from 'material-ui/TextField';
-import { List, ListItem } from 'material-ui/List';
 import DatePicker from 'material-ui/DatePicker';
 import TimePicker from 'material-ui/TimePicker';
 
-import './App.css';
+import HeadToolbar from './components/HeadToolbar';
+import CapsuleList from './components/CapsuleList';
 
 class App extends Component {
   constructor(props) {
@@ -29,7 +31,8 @@ class App extends Component {
       web3: null,
       account: null,
       contractInstance: null,
-      capsules: []
+      capsules: [],
+      capsulesLoading: false
     };
 
     this.getWeb3 = this.getWeb3.bind(this);
@@ -44,7 +47,6 @@ class App extends Component {
     this.getNumberOfCapsules = this.getNumberOfCapsules.bind(this);
     this.getCapsuleInfo = this.getCapsuleInfo.bind(this);
     this.getCapsules = this.getCapsules.bind(this);
-    this.setCapsules = this.setCapsules.bind(this);
     this.getContractValue = this.getContractValue.bind(this);
     this.setContractValue = this.setContractValue.bind(this);
   }
@@ -167,8 +169,7 @@ class App extends Component {
 
         this.getNumberOfCapsules()
           .then(numberOfCapsules => {
-            this.getCapsules(numberOfCapsules)
-              .then(this.setCapsules);
+            this.getCapsules(numberOfCapsules);
           });
       });
   }
@@ -199,20 +200,23 @@ class App extends Component {
   }
 
   getCapsules(numberOfCapsules) {
-    console.log(`number of capsules: ${numberOfCapsules}`);
+    this.setState({
+      capsulesLoading: true
+    });
+
     const capsulesPromises = [];
 
     for (let i = 0; i < numberOfCapsules; i++) {
       capsulesPromises.push(this.getCapsuleInfo(i + 1));
     }
 
-    return Promise.all(capsulesPromises);
-  }
-
-  setCapsules(capsules) {
-    this.setState({
-      capsules
-    });
+    return Promise.all(capsulesPromises)
+      .then(capsules => {
+        this.setState({
+          capsules,
+          capsulesLoading: false
+        });
+      });
   }
 
   render() {
@@ -220,6 +224,7 @@ class App extends Component {
       account,
       balance,
       capsules,
+      capsulesLoading,
       contractValue,
       currentBlock,
       dateValue,
@@ -236,36 +241,17 @@ class App extends Component {
               titleStyle={{ fontWeight: 100 }}
               iconStyleLeft={{ display: 'none' }}
             />
-            <p>
-              Your MetaMask account: {account}
-            </p>
-            <p>
-              Your MetaMask balance: {web3 ? web3.fromWei(balance, 'ether').toString() : 0}
-            </p>
-            <p>
-              Contract Value: {contractValue}
-            </p>
-            <p>
-              Current Block: {currentBlock}
-            </p>
             <Paper
-              style={{ maxWidth: 800, margin: 'auto', textAlign: 'center', padding: 20 }}
+              style={{ maxWidth: 1000, margin: '40px auto' }}
             >
-              <div>
-                <List>
-                  {capsules.map((capsule, idx) => (
-                    <ListItem
-                      primaryText={`
-                        ${web3.fromWei(capsule.value, 'ether')} ether
-                        : ${moment(capsule.lockTime * 1000).format('MMM Do YYYY(h:mm:ss a)')}
-                        - ${moment(capsule.unlockTime * 1000).format('MMM Do YYYY(h:mm:ss a)')}`
-                      }
-                      key={idx}
-                    />
-                  ))}
-                </List>
-              </div>
-              <div>
+              <HeadToolbar
+              />
+              <CapsuleList
+                capsules={capsules}
+                capsulesLoading={capsulesLoading}
+                web3={web3}
+              />
+              {/* <div>
                 <DatePicker
                   hintText="Date to bury ether until"
                   value={dateValue}
@@ -297,8 +283,20 @@ class App extends Component {
                   primary={true}
                   onClick={this.handleDeposit}
                 />
-              </div>
+              </div> */}
             </Paper>
+            <p>
+              Your MetaMask account: {account}
+            </p>
+            <p>
+              Your MetaMask balance: {web3 ? web3.fromWei(balance, 'ether').toString() : 0}
+            </p>
+            <p>
+              Contract Value: {contractValue}
+            </p>
+            <p>
+              Current Block: {currentBlock}
+            </p>
           </div>
         </MuiThemeProvider>
     );
