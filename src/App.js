@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 
-import SimpleStorageContract from '../build/contracts/SimpleStorage.json'
+import EthCapsuleContract from '../build/contracts/EthCapsule.json'
 import getWeb3 from './utils/getWeb3'
 import contract from 'truffle-contract';
 
@@ -9,6 +9,7 @@ import AppBar from 'material-ui/AppBar';
 import Paper from 'material-ui/Paper';
 import RaisedButton from 'material-ui/RaisedButton';
 import TextField from 'material-ui/TextField';
+import { List, ListItem } from 'material-ui/List';
 
 import './App.css';
 
@@ -17,22 +18,29 @@ class App extends Component {
     super(props)
 
     this.state = {
+      contractValue: 0,
       currentBlock: 0,
       inputValue: 0,
       depositedValue: 0,
       web3: null,
       account: null,
-      simpleStorageInstance: null
+      contractInstance: null,
+      capsules: []
     };
 
     this.getWeb3 = this.getWeb3.bind(this);
     this.getAccounts = this.getAccounts.bind(this);
     this.getBalance = this.getBalance.bind(this);
+    this.setBalance = this.setBalance.bind(this);
     this.instantiateContract = this.instantiateContract.bind(this);
-    this.getDepositedValue = this.getDepositedValue.bind(this);
     this.handleChange = this.handleChange.bind(this);
-    this.handleSubmit = this.handleSubmit.bind(this);
-    this.runBlockChecker = this.runBlockChecker.bind(this);
+    this.handleDeposit = this.handleDeposit.bind(this);
+    this.getNumberOfCapsules = this.getNumberOfCapsules.bind(this);
+    this.getCapsuleInfo = this.getCapsuleInfo.bind(this);
+    this.getCapsules = this.getCapsules.bind(this);
+    this.setCapsules = this.setCapsules.bind(this);
+    this.getContractValue = this.getContractValue.bind(this);
+    this.setContractValue = this.setContractValue.bind(this);
   }
 
   componentWillMount() {
@@ -43,11 +51,16 @@ class App extends Component {
         this.setState({ account: accounts[0] });
       })
       .then(this.getBalance)
-      .then(balance => {
-        this.setState({ balance });
-      })
+      .then(this.setBalance)
       .then(this.instantiateContract)
-      .then(this.getDepositedValue);
+      .then((contractInstance) => {
+;        this.setState({ contractInstance });
+      })
+      .then(this.getNumberOfCapsules)
+      .then(this.getCapsules)
+      .then(this.setCapsules)
+      .then(this.getContractValue)
+      .then(this.setContractValue);
   }
 
   getWeb3() {
@@ -86,6 +99,21 @@ class App extends Component {
     });
   }
 
+  setBalance(balance) {
+    this.setState({ balance });
+  }
+
+  getContractValue() {
+    return this.state.contractInstance.getContractValue()
+      .then(response => response.toNumber());
+  }
+
+  setContractValue(contractValue) {
+    this.setState({
+      contractValue
+    });
+  }
+
   getBlockNumber() {
     return new Promise((resolve, reject) => {
       this.state.web3.eth.getBlockNumber((err, number) => {
@@ -98,56 +126,85 @@ class App extends Component {
     });
   }
 
-  getDepositedValue() {
-    return this.state.simpleStorageContractInstance.getDepositorInfo.call()
-      .then(response => {
-        this.setState({ depositedValue: response.toNumber() });
-      });
-  }
-
   handleChange(evt, newVal) {
     this.setState({ inputValue: newVal });
   }
 
-  handleSubmit() {
-    this.state.simpleStorageContractInstance.deposit({ from: this.state.account, value: this.state.inputValue })
+  handleDeposit() {
+    console.log(`burying ${this.state.web3.toWei(this.state.inputValue, 'ether')} from ${this.state.account}`);
+    this.state.contractInstance.bury(9999, {
+      from: this.state.account,
+      value: this.state.web3.toWei(this.state.inputValue, 'ether'),
+      gas: 3000000,
+      gasPrice: 1000
+    })
       .then(response => {
+        console.log(response);
         this.getBalance()
-          .then(balance => {
-            this.setState({ balance });
+          .then(this.setBalance);
+
+        this.getContractValue()
+          .then(this.setContractValue);
+
+        this.getNumberOfCapsules()
+          .then(numberOfCapsules => {
+            this.getCapsules(numberOfCapsules)
+              .then(this.setCapsules);
           });
-        
-        this.getDepositedValue();
       });
   }
 
   instantiateContract() {
-    const simpleStorageContract = contract(SimpleStorageContract);
+    const ethCapsuleContract = contract(EthCapsuleContract);
+    ethCapsuleContract.setProvider(this.state.web3.currentProvider);
+    return ethCapsuleContract.deployed();
+  }
 
-    simpleStorageContract.setProvider(this.state.web3.currentProvider);
-
-    return simpleStorageContract.deployed()
-      .then((instance) => {
-        this.setState({ simpleStorageContractInstance: instance });
+  getNumberOfCapsules() {
+    return this.state.contractInstance.getNumberOfCapsules()
+      .then(capsules => {
+        return capsules.toNumber();
       });
   }
 
-  runBlockChecker() {
-    setInterval(() => {
-      this.getBlockNumber()
-        .then(number => {
-          this.setState({ currentBlock: number });
-        });
-    }, 5000);
+  getCapsuleInfo(capsuleNumber) {
+    return this.state.contractInstance.getCapsuleInfo(capsuleNumber)
+      .then(response => {
+        console.log(`capsule ${capsuleNumber}:`);
+        console.log(response[0].toNumber());
+        console.log(response[1].toNumber());
+        return {
+          value: response[0].toNumber(),
+          lockTime: response[1].toNumber()
+        };
+      });
+  }
+
+  getCapsules(numberOfCapsules) {
+    console.log(`number of capsules: ${numberOfCapsules}`);
+    const capsulesPromises = [];
+
+    for (let i = 0; i < numberOfCapsules; i++) {
+      capsulesPromises.push(this.getCapsuleInfo(i + 1));
+    }
+
+    return Promise.all(capsulesPromises);
+  }
+
+  setCapsules(capsules) {
+    this.setState({
+      capsules
+    });
   }
 
   render() {
     const {
       account,
       balance,
+      capsules,
+      contractValue,
       currentBlock,
       inputValue,
-      depositedValue,
       web3
     } = this.state;
 
@@ -166,7 +223,7 @@ class App extends Component {
               Your MetaMask balance: {web3 ? web3.fromWei(balance, 'ether').toString() : 0}
             </p>
             <p>
-              Your Deposited Value: {depositedValue} Wei / {web3 ? web3.fromWei(depositedValue, 'ether').toString() : 0} Ether
+              Contract Value: {contractValue}
             </p>
             <p>
               Current Block: {currentBlock}
@@ -174,6 +231,16 @@ class App extends Component {
             <Paper
               style={{ maxWidth: 800, margin: 'auto', textAlign: 'center', padding: 20 }}
             >
+              <div>
+                <List>
+                  {capsules.map((capsule, idx) => (
+                    <ListItem
+                      primaryText={`Value: ${web3.fromWei(capsule.value, 'ether')} / Lock Time: ${capsule.lockTime} / Opened: ${capsule.opened}`}
+                      key={idx}
+                    />
+                  ))}
+                </List>
+              </div>
               <div>
                 <TextField
                   floatingLabelText="Amount to Deposit"
@@ -187,7 +254,7 @@ class App extends Component {
                 <RaisedButton
                   label="Deposit"
                   primary={true}
-                  onClick={this.handleSubmit}
+                  onClick={this.handleDeposit}
                 />
               </div>
             </Paper>
