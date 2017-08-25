@@ -21,17 +21,13 @@ const MatchText = ({ match }) => {
       text = 'Dig up a Capsule';
       break;
     default:
-      break;
+      text = 'Capsule Information';
   }
 
   return <div>{text}</div>;
 };
 
 const HeadToolbar = (props) => {
-  // const {
-
-  // } = props;
-
   return (
     <Toolbar
       style={{ paddingLeft: 50 }}>

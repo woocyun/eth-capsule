@@ -50,6 +50,17 @@ class App extends Component {
       .then(this.getNumberOfCapsules)
       .then(this.getCapsules)
       .then(this.getContractValue);
+    
+    this.props.history.listen((location) => {
+      if (location.pathname === '/') {
+        this.getNumberOfCapsules()
+          .then(this.getCapsules);
+        
+        this.getAccounts()
+          .then(this.getBalance)
+          .then(this.getContractValue);
+      }
+    });
   }
 
   getWeb3() {
@@ -106,6 +117,10 @@ class App extends Component {
   }
 
   getNumberOfCapsules() {
+    this.setState({
+      capsulesLoading: true
+    });
+
     return this.state.contractInstance.getNumberOfCapsules()
       .then(capsules => {
         return capsules.toNumber();
@@ -113,10 +128,6 @@ class App extends Component {
   }
 
   getCapsules(numberOfCapsules) {
-    this.setState({
-      capsulesLoading: true
-    });
-
     const capsulesPromises = Array
       .from(new Array(numberOfCapsules), (val, index) => index + 1)
       .map(num => this.getCapsuleInfo(num));
@@ -154,18 +165,8 @@ class App extends Component {
   }
 
   handleCapsuleRedirect(id) {
-    // const capsules = this.state.capsules;
-
     return () => {
-      // let match;
-      
-      // capsules.forEach((_capsule, idx) => {
-      //   if (_capsule === capsule) match = idx + 1;
-      // });
-
       this.props.history.push(`/${id}`);
-
-      // console.log(capsuleIndex, this.props.history);
     };
   }
 
@@ -182,7 +183,7 @@ class App extends Component {
         gasPrice: 1000
       })
         .then(response => {
-          console.log(response);
+          this.props.history.push('/');
         });
     };
   }
@@ -199,7 +200,6 @@ class App extends Component {
     } = this.state;
 
     const {
-      getCapsules,
       handleCapsuleRedirect,
       handleWithdraw
     } = this;
@@ -228,7 +228,6 @@ class App extends Component {
         contractInstance={contractInstance}
         web3={web3}
         history={props.history}
-        getCapsules={getCapsules}
       />
     );
 

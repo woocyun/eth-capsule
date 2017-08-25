@@ -60,7 +60,6 @@ class CreateCapsule extends Component {
     )
       .then(() => {
         history.push('/');
-        this.props.getCapsules();
       });
   }
 
