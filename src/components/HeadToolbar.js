@@ -60,12 +60,6 @@ const HeadToolbar = (props) => {
             </Link>
           }>
           </MenuItem>
-          <MenuItem primaryText={
-            <Link to="/dig">
-              Dig up a Capsule
-            </Link>
-          }>
-          </MenuItem>
           <MenuItem primaryText="Instructions" />
           <MenuItem primaryText="FAQ" />
           <MenuItem primaryText="Contract" />

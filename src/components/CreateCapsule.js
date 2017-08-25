@@ -36,17 +36,31 @@ class CreateCapsule extends Component {
   }
 
   handleDeposit() {
-    this.props.contractInstance.bury(
-      new Date(new Date(moment(this.state.dateValue).format('ddd MMM DD YYYY') + ' ' + moment(this.state.timeValue).format('HH:mm:ss')) - new Date()) / 1000,
+    const {
+      contractInstance,
+      account,
+      web3,
+      history
+    } = this.props;
+
+    const {
+      dateValue,
+      timeValue,
+      depositValue
+    } = this.state;
+
+    contractInstance.bury(
+      new Date(new Date(moment(dateValue).format('ddd MMM DD YYYY') + ' ' + moment(timeValue).format('HH:mm:ss')) - new Date()) / 1000,
       {
-        from: this.props.account,
-        value: this.props.web3.toWei(this.state.depositValue, 'ether'),
+        from: account,
+        value: web3.toWei(depositValue, 'ether'),
         gas: 3000000,
         gasPrice: 1000
       }
     )
       .then(() => {
-        console.log('ok');
+        history.push('/');
+        this.props.getCapsules();
       });
   }
 

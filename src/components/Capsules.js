@@ -2,16 +2,17 @@ import React from 'react';
 import moment from 'moment';
 
 import { List, ListItem } from 'material-ui/List';
-import {red500, /*blue500*/} from 'material-ui/styles/colors';
+import {red500, blue500} from 'material-ui/styles/colors';
 import CircularProgress from 'material-ui/CircularProgress';
 
 import Lock from 'material-ui/svg-icons/action/lock';
-// import LockOpen from 'material-ui/svg-icons/action/lock-open';
+import LockOpen from 'material-ui/svg-icons/action/lock-open';
 
-const CapsuleList = (props) => {
+const Capsules = (props) => {
   const {
     capsules,
     capsulesLoading,
+    onCapsuleRedirect,
     web3
   } = props;
 
@@ -27,13 +28,17 @@ const CapsuleList = (props) => {
         <List>
           {capsules.map((capsule, idx) => (
             <ListItem
+              onClick={onCapsuleRedirect(capsule.id)}
               primaryText={`
                 ${moment(capsule.unlockTime * 1000).format('MMM Do YYYY h:mm a')}
                 (${web3.fromWei(capsule.value, 'ether')} ether)
               `}
-              leftIcon={
+              leftIcon={new Date(capsule.unlockTime * 1000) > new Date() ?
                 <Lock
                   color={red500}
+                /> :
+                <LockOpen
+                  color={blue500}
                 />
               }
               key={idx}
@@ -46,4 +51,4 @@ const CapsuleList = (props) => {
   );
 };
 
-export default CapsuleList;
+export default Capsules;

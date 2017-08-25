@@ -12,7 +12,8 @@ import AppBar from 'material-ui/AppBar';
 import Paper from 'material-ui/Paper';
 
 import HeadToolbar from './components/HeadToolbar';
-import CapsuleList from './components/CapsuleList';
+import Capsules from './components/Capsules.js';
+import CapsuleItem from './components/CapsuleItem.js';
 import CreateCapsule from './components/CreateCapsule';
 
 class App extends Component {
@@ -20,46 +21,35 @@ class App extends Component {
     super(props)
 
     this.state = {
-      contractValue: 0,
-      currentBlock: 0,
-      depositedValue: 0,
-      web3: null,
       account: null,
-      contractInstance: null,
       capsules: [],
-      capsulesLoading: false
+      capsulesLoading: true,
+      contractInstance: null,
+      contractValue: 0,
+      depositedValue: 0,
+      web3: null
     };
 
     this.getWeb3 = this.getWeb3.bind(this);
     this.getAccounts = this.getAccounts.bind(this);
     this.getBalance = this.getBalance.bind(this);
-    this.setBalance = this.setBalance.bind(this);
     this.instantiateContract = this.instantiateContract.bind(this);
-    this.getNumberOfCapsules = this.getNumberOfCapsules.bind(this);
-    this.getCapsuleInfo = this.getCapsuleInfo.bind(this);
-    this.getCapsules = this.getCapsules.bind(this);
     this.getContractValue = this.getContractValue.bind(this);
-    this.setContractValue = this.setContractValue.bind(this);
+    this.getNumberOfCapsules = this.getNumberOfCapsules.bind(this);
+    this.getCapsules = this.getCapsules.bind(this);
+    this.getCapsuleInfo = this.getCapsuleInfo.bind(this);
+    this.handleCapsuleRedirect = this.handleCapsuleRedirect.bind(this);
+    this.handleWithdraw = this.handleWithdraw.bind(this);
   }
 
-  componentWillMount() {
+  componentDidMount() {
     this.getWeb3()
-      .then(this.runBlockChecker)
       .then(this.getAccounts)
-      .then(accounts => {
-        this.setState({ account: accounts[0] });
-      })
       .then(this.getBalance)
-      .then(this.setBalance)
       .then(this.instantiateContract)
-      .then((contractInstance) => {
-;        this.setState({ contractInstance });
-      })
       .then(this.getNumberOfCapsules)
       .then(this.getCapsules)
-      .then(this.setCapsules)
-      .then(this.getContractValue)
-      .then(this.setContractValue);
+      .then(this.getContractValue);
   }
 
   getWeb3() {
@@ -83,7 +73,10 @@ class App extends Component {
           reject(err);
         }
       });
-    });
+    })
+      .then(accounts => {
+        this.setState({ account: accounts[0] });
+      });
   }
 
   getBalance() {
@@ -95,40 +88,21 @@ class App extends Component {
           reject(err);
         }
       });
-    });
-  }
-
-  setBalance(balance) {
-    this.setState({ balance });
-  }
-
-  getContractValue() {
-    return this.state.contractInstance.getContractValue()
-      .then(response => response.toNumber());
-  }
-
-  setContractValue(contractValue) {
-    this.setState({
-      contractValue
-    });
-  }
-
-  getBlockNumber() {
-    return new Promise((resolve, reject) => {
-      this.state.web3.eth.getBlockNumber((err, number) => {
-        if (!err) {
-          resolve(number);
-        } else {
-          reject(err);
-        }
+    })
+      .then(balance => {
+        this.setState({ balance });
       });
-    });
   }
 
   instantiateContract() {
     const ethCapsuleContract = contract(EthCapsuleContract);
+
     ethCapsuleContract.setProvider(this.state.web3.currentProvider);
-    return ethCapsuleContract.deployed();
+
+    return ethCapsuleContract.deployed()
+      .then((contractInstance) => {
+        this.setState({ contractInstance });
+      });
   }
 
   getNumberOfCapsules() {
@@ -138,36 +112,79 @@ class App extends Component {
       });
   }
 
-  getCapsuleInfo(capsuleNumber) {
-    return this.state.contractInstance.getCapsuleInfo(capsuleNumber)
-      .then(response => {
-        return {
-          value: response[0].toNumber(),
-          lockTime: response[1].toNumber(),
-          duration: response[2].toNumber(),
-          unlockTime: response[3].toNumber()
-        };
-      });
-  }
-
   getCapsules(numberOfCapsules) {
     this.setState({
       capsulesLoading: true
     });
 
-    const capsulesPromises = [];
-
-    for (let i = 0; i < numberOfCapsules; i++) {
-      capsulesPromises.push(this.getCapsuleInfo(i + 1));
-    }
+    const capsulesPromises = Array
+      .from(new Array(numberOfCapsules), (val, index) => index + 1)
+      .map(num => this.getCapsuleInfo(num));
 
     return Promise.all(capsulesPromises)
       .then(capsules => {
         this.setState({
-          capsules,
+          capsules: capsules.sort((prevCap, nextCap) => prevCap.unlockTime < nextCap.unlockTime),
           capsulesLoading: false
         });
       });
+  }
+
+  getCapsuleInfo(id) {
+    return this.state.contractInstance.getCapsuleInfo(id)
+      .then(response => {
+        return {
+          value: response[0].toNumber(),
+          id: response[1].toNumber(),
+          lockTime: response[2].toNumber(),
+          unlockTime: response[3].toNumber(),
+          withdrawnTime: response[4].toNumber()
+        };
+      });
+  }
+
+  getContractValue() {
+    return this.state.contractInstance.getContractValue()
+      .then(response => response.toNumber())
+      .then(contractValue => {
+        this.setState({
+          contractValue
+        });
+      });
+  }
+
+  handleCapsuleRedirect(id) {
+    // const capsules = this.state.capsules;
+
+    return () => {
+      // let match;
+      
+      // capsules.forEach((_capsule, idx) => {
+      //   if (_capsule === capsule) match = idx + 1;
+      // });
+
+      this.props.history.push(`/${id}`);
+
+      // console.log(capsuleIndex, this.props.history);
+    };
+  }
+
+  handleWithdraw(id) {
+    const {
+      account,
+      contractInstance
+    } = this.state;
+
+    return () => {
+      return contractInstance.dig(id, {
+        from: account,
+        gas: 3000000,
+        gasPrice: 1000
+      })
+        .then(response => {
+          console.log(response);
+        });
+    };
   }
 
   render() {
@@ -176,62 +193,71 @@ class App extends Component {
       balance,
       capsules,
       capsulesLoading,
+      contractInstance,
       contractValue,
-      currentBlock,
-      web3,
-      contractInstance
+      web3
     } = this.state;
 
-    const capsuleListComponent = () => {
-      return (
-        <CapsuleList
-          capsules={capsules}
-          capsulesLoading={capsulesLoading}
-          web3={web3}
-        />
-      );
-    };
+    const {
+      getCapsules,
+      handleCapsuleRedirect,
+      handleWithdraw
+    } = this;
 
-    const createComponent = () => {
-      return (
-        <CreateCapsule
-          account={account}
-          contractInstance={contractInstance}
-          web3={web3}
-        />
-      )
-    };
+    const capsulesComponent = () => (
+      <Capsules
+        capsules={capsules}
+        capsulesLoading={capsulesLoading}
+        onCapsuleRedirect={handleCapsuleRedirect}
+        web3={web3}
+      />
+    );
+
+    const capsuleItemComponent = (props) => (
+      <CapsuleItem
+        capsules={capsules}
+        capsuleId={props.match.params.id}
+        onWithdraw={handleWithdraw}
+        web3={web3}
+      />
+    );
+
+    const createComponent = (props) => (
+      <CreateCapsule
+        account={account}
+        contractInstance={contractInstance}
+        web3={web3}
+        history={props.history}
+        getCapsules={getCapsules}
+      />
+    );
 
     return (
-        <MuiThemeProvider>
-          <div className="App">
-            <AppBar
-              title="Eth Capsule"
-              titleStyle={{ fontWeight: 100 }}
-              iconStyleLeft={{ display: 'none' }}
+      <MuiThemeProvider>
+        <div className="App">
+          <AppBar
+            title="Eth Capsule"
+            titleStyle={{ fontWeight: 100 }}
+            iconStyleLeft={{ display: 'none' }}
+          />
+          <Paper style={{ maxWidth: 1000, margin: '40px auto' }}>
+            <HeadToolbar
             />
-            <Paper
-              style={{ maxWidth: 1000, margin: '40px auto' }}
-            >
-              <HeadToolbar
-              />
-              <Route exact path="/" component={capsuleListComponent} />
-              <Route path="/create" component={createComponent} />
-            </Paper>
-            <p>
-              Your MetaMask account: {account}
-            </p>
-            <p>
-              Your MetaMask balance: {web3 ? web3.fromWei(balance, 'ether').toString() : 0}
-            </p>
-            <p>
-              Contract Value: {contractValue}
-            </p>
-            <p>
-              Current Block: {currentBlock}
-            </p>
-          </div>
-        </MuiThemeProvider>
+            <Route exact path="/" component={capsulesComponent} />
+            <Route path="/:id" component={capsuleItemComponent} />
+            <Route path="/create" component={createComponent} />
+          </Paper>
+          <p onClick={this.incrementFoo}>
+            Your MetaMask account: {account}
+          </p>
+          <p>
+            Your MetaMask balance: {web3 ? web3.fromWei(balance, 'ether').toString() : 0} Ether
+          </p>
+          <p>
+            Contract Value: {web3 ? web3.fromWei(contractValue, 'ether').toString() : 0} Ether
+          </p>
+        </div>
+      </MuiThemeProvider>
     );
   }
 }
