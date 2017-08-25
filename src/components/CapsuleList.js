@@ -2,11 +2,11 @@ import React from 'react';
 import moment from 'moment';
 
 import { List, ListItem } from 'material-ui/List';
-import {red500, blue500} from 'material-ui/styles/colors';
+import {red500, /*blue500*/} from 'material-ui/styles/colors';
 import CircularProgress from 'material-ui/CircularProgress';
 
 import Lock from 'material-ui/svg-icons/action/lock';
-import LockOpen from 'material-ui/svg-icons/action/lock-open';
+// import LockOpen from 'material-ui/svg-icons/action/lock-open';
 
 const CapsuleList = (props) => {
   const {

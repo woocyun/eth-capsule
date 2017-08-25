@@ -1,11 +1,31 @@
 import React from 'react';
+import { Route, Link } from 'react-router-dom'
 
 import { Toolbar, ToolbarGroup } from 'material-ui/Toolbar';
 import MenuItem from 'material-ui/MenuItem';
 import IconMenu from 'material-ui/IconMenu';
 import IconButton from 'material-ui/IconButton';
 import NavigationExpandMoreIcon from 'material-ui/svg-icons/navigation/expand-more';
-import { Link } from 'react-router-dom'
+
+const MatchText = ({ match }) => {
+  let text;
+  
+  switch (match.url) {
+    case '/':
+      text = 'Capsules';
+      break;
+    case '/create':
+      text = 'Bury a Capsule';
+      break;
+    case '/dig':
+      text = 'Dig up a Capsule';
+      break;
+    default:
+      break;
+  }
+
+  return <div>{text}</div>;
+};
 
 const HeadToolbar = (props) => {
   // const {
@@ -16,7 +36,10 @@ const HeadToolbar = (props) => {
     <Toolbar
       style={{ paddingLeft: 50 }}>
       <ToolbarGroup firstChild={true} disabled={true}>
-        <h3 style={{ fontWeight: 400 }}>Your Capsules</h3>
+        <h3 style={{ fontWeight: 400 }}>
+          <Route exact path="/" component={MatchText} />
+          <Route exact path="/:id" component={MatchText} />
+        </h3>
       </ToolbarGroup>
       <ToolbarGroup>
         <IconMenu
@@ -37,7 +60,12 @@ const HeadToolbar = (props) => {
             </Link>
           }>
           </MenuItem>
-          <MenuItem primaryText="Dig up a Capsule" />
+          <MenuItem primaryText={
+            <Link to="/dig">
+              Dig up a Capsule
+            </Link>
+          }>
+          </MenuItem>
           <MenuItem primaryText="Instructions" />
           <MenuItem primaryText="FAQ" />
           <MenuItem primaryText="Contract" />

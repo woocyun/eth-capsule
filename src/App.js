@@ -1,6 +1,6 @@
 import React, { Component } from 'react'
 import { Route } from 'react-router-dom'
-import moment from 'moment';
+
 import EthCapsuleContract from '../build/contracts/EthCapsule.json'
 import getWeb3 from './utils/getWeb3'
 import contract from 'truffle-contract';
@@ -22,9 +22,6 @@ class App extends Component {
     this.state = {
       contractValue: 0,
       currentBlock: 0,
-      depositValue: 0,
-      dateValue: null,
-      timeValue: null,
       depositedValue: 0,
       web3: null,
       account: null,
@@ -38,10 +35,6 @@ class App extends Component {
     this.getBalance = this.getBalance.bind(this);
     this.setBalance = this.setBalance.bind(this);
     this.instantiateContract = this.instantiateContract.bind(this);
-    this.handleDepositChange = this.handleDepositChange.bind(this);
-    this.handleDateSelect = this.handleDateSelect.bind(this);
-    this.handleTimeSelect = this.handleTimeSelect.bind(this);
-    this.handleDeposit = this.handleDeposit.bind(this);
     this.getNumberOfCapsules = this.getNumberOfCapsules.bind(this);
     this.getCapsuleInfo = this.getCapsuleInfo.bind(this);
     this.getCapsules = this.getCapsules.bind(this);
@@ -132,46 +125,6 @@ class App extends Component {
     });
   }
 
-  handleDepositChange(evt, newVal) {
-    this.setState({ depositValue: newVal });
-  }
-
-  handleDateSelect(ignore, dateValue) {
-    this.setState({
-      dateValue
-    });
-  }
-
-  handleTimeSelect(ignore, timeValue) {
-    this.setState({
-      timeValue
-    });
-  }
-
-  handleDeposit() {
-    this.state.contractInstance.bury(
-      new Date(new Date(moment(this.state.dateValue).format('ddd MMM DD YYYY') + ' ' + moment(this.state.timeValue).format('HH:mm:ss')) - new Date()) / 1000,
-      {
-        from: this.state.account,
-        value: this.state.web3.toWei(this.state.depositValue, 'ether'),
-        gas: 3000000,
-        gasPrice: 1000
-      })
-      .then(response => {
-        console.log(response);
-        this.getBalance()
-          .then(this.setBalance);
-
-        this.getContractValue()
-          .then(this.setContractValue);
-
-        this.getNumberOfCapsules()
-          .then(numberOfCapsules => {
-            this.getCapsules(numberOfCapsules);
-          });
-      });
-  }
-
   instantiateContract() {
     const ethCapsuleContract = contract(EthCapsuleContract);
     ethCapsuleContract.setProvider(this.state.web3.currentProvider);
@@ -225,10 +178,8 @@ class App extends Component {
       capsulesLoading,
       contractValue,
       currentBlock,
-      dateValue,
-      timeValue,
-      depositValue,
-      web3
+      web3,
+      contractInstance
     } = this.state;
 
     const capsuleListComponent = () => {
@@ -244,13 +195,9 @@ class App extends Component {
     const createComponent = () => {
       return (
         <CreateCapsule
-          dateValue={dateValue}
-          timeValue={timeValue}
-          depositValue={depositValue}
-          onDateSelect={this.handleDateSelect}
-          onTimeSelect={this.handleTimeSelect}
-          onDeposit={this.handleDeposit}
-          onDepositChange={this.handleDepositChange}
+          account={account}
+          contractInstance={contractInstance}
+          web3={web3}
         />
       )
     };
