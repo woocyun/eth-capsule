@@ -5,6 +5,8 @@ contract EthCapsule {
     uint numCapsules;
     mapping (uint => Capsule) capsules;
   }
+  
+  mapping (address => Depositor) depositors;
 
   struct Capsule {
     uint value;
@@ -14,7 +16,10 @@ contract EthCapsule {
     uint withdrawnTime;
   }
 
-  mapping (address => Depositor) depositors;
+  uint public totalCapsules;
+  uint public totalValue;
+  uint public totalBuriedCapsules;
+  uint public totalBuriedValue;
 
   function bury(uint duration) payable {
     require(msg.value > 0);
@@ -22,6 +27,11 @@ contract EthCapsule {
     if (depositors[msg.sender].numCapsules <= 0) {
         depositors[msg.sender] = Depositor({numCapsules: 0});
     }
+
+    totalCapsules++;
+    totalValue += msg.value;
+    totalBuriedCapsules++;
+    totalBuriedValue = totalBuriedValue + msg.value;
 
     depositors[msg.sender].numCapsules++;
     Depositor storage depositor = depositors[msg.sender];
@@ -36,7 +46,11 @@ contract EthCapsule {
 
   function dig(uint capsuleNumber) {
     Capsule storage capsule = depositors[msg.sender].capsules[capsuleNumber];
+
     require(capsule.unlockTime < block.timestamp && capsule.withdrawnTime == 0);
+
+    totalBuriedCapsules--;
+    totalBuriedValue -= capsule.value;
     capsule.withdrawnTime = block.timestamp;
     msg.sender.transfer(capsule.value);
   }

@@ -27,6 +27,10 @@ class App extends Component {
       contractInstance: null,
       contractValue: 0,
       depositedValue: 0,
+      totalCapsules: 0,
+      totalValue: 0,
+      totalBuriedCapsules: 0,
+      getTotalBuriedValue: 0,
       web3: null
     };
 
@@ -38,6 +42,10 @@ class App extends Component {
     this.getNumberOfCapsules = this.getNumberOfCapsules.bind(this);
     this.getCapsules = this.getCapsules.bind(this);
     this.getCapsuleInfo = this.getCapsuleInfo.bind(this);
+    this.getTotalCapsules = this.getTotalCapsules.bind(this);
+    this.getTotalValue = this.getTotalValue.bind(this);
+    this.getTotalBuriedCapsules = this.getTotalBuriedCapsules.bind(this);
+    this.getTotalBuriedValue = this.getTotalBuriedValue.bind(this);
     this.handleCapsuleRedirect = this.handleCapsuleRedirect.bind(this);
     this.handleWithdraw = this.handleWithdraw.bind(this);
   }
@@ -49,7 +57,11 @@ class App extends Component {
       .then(this.instantiateContract)
       .then(this.getNumberOfCapsules)
       .then(this.getCapsules)
-      .then(this.getContractValue);
+      .then(this.getContractValue)
+      .then(this.getTotalCapsules)
+      .then(this.getTotalValue)
+      .then(this.getTotalBuriedCapsules)
+      .then(this.getTotalBuriedValue);
     
     this.props.history.listen((location) => {
       if (location.pathname === '/') {
@@ -58,7 +70,11 @@ class App extends Component {
         
         this.getAccounts()
           .then(this.getBalance)
-          .then(this.getContractValue);
+          .then(this.getContractValue)
+          .then(this.getTotalCapsules)
+          .then(this.getTotalValue)
+          .then(this.getTotalBuriedCapsules)
+          .then(this.getTotalBuriedValue);
       }
     });
   }
@@ -105,17 +121,6 @@ class App extends Component {
       });
   }
 
-  instantiateContract() {
-    const ethCapsuleContract = contract(EthCapsuleContract);
-
-    ethCapsuleContract.setProvider(this.state.web3.currentProvider);
-
-    return ethCapsuleContract.deployed()
-      .then((contractInstance) => {
-        this.setState({ contractInstance });
-      });
-  }
-
   getNumberOfCapsules() {
     this.setState({
       capsulesLoading: true
@@ -124,6 +129,19 @@ class App extends Component {
     return this.state.contractInstance.getNumberOfCapsules()
       .then(capsules => {
         return capsules.toNumber();
+      });
+  }
+
+  getCapsuleInfo(id) {
+    return this.state.contractInstance.getCapsuleInfo(id)
+      .then(response => {
+        return {
+          value: response[0].toNumber(),
+          id: response[1].toNumber(),
+          lockTime: response[2].toNumber(),
+          unlockTime: response[3].toNumber(),
+          withdrawnTime: response[4].toNumber()
+        };
       });
   }
 
@@ -141,19 +159,6 @@ class App extends Component {
       });
   }
 
-  getCapsuleInfo(id) {
-    return this.state.contractInstance.getCapsuleInfo(id)
-      .then(response => {
-        return {
-          value: response[0].toNumber(),
-          id: response[1].toNumber(),
-          lockTime: response[2].toNumber(),
-          unlockTime: response[3].toNumber(),
-          withdrawnTime: response[4].toNumber()
-        };
-      });
-  }
-
   getContractValue() {
     return this.state.contractInstance.getContractValue()
       .then(response => response.toNumber())
@@ -161,6 +166,34 @@ class App extends Component {
         this.setState({
           contractValue
         });
+      });
+  }
+
+  getTotalCapsules() {
+    return this.state.contractInstance.totalCapsules()
+      .then(response => {
+        this.setState({ totalCapsules: response.toNumber() });
+      });
+  }
+
+  getTotalValue() {
+    return this.state.contractInstance.totalValue()
+      .then(response => {
+        this.setState({ totalValue: response.toNumber() });
+      });
+  }
+
+  getTotalBuriedCapsules() {
+    return this.state.contractInstance.totalBuriedCapsules()
+      .then(response => {
+        this.setState({ totalBuriedCapsules: response.toNumber() });
+      });
+  }
+
+  getTotalBuriedValue() {
+    return this.state.contractInstance.totalBuriedValue()
+      .then(response => {
+        this.setState({ totalBuriedValue: response.toNumber() });
       });
   }
 
@@ -188,6 +221,17 @@ class App extends Component {
     };
   }
 
+  instantiateContract() {
+    const ethCapsuleContract = contract(EthCapsuleContract);
+
+    ethCapsuleContract.setProvider(this.state.web3.currentProvider);
+
+    return ethCapsuleContract.deployed()
+      .then((contractInstance) => {
+        this.setState({ contractInstance });
+      });
+  }
+
   render() {
     const {
       account,
@@ -196,6 +240,10 @@ class App extends Component {
       capsulesLoading,
       contractInstance,
       contractValue,
+      totalCapsules,
+      totalValue,
+      totalBuriedCapsules,
+      totalBuriedValue,
       web3
     } = this.state;
 
@@ -254,6 +302,18 @@ class App extends Component {
           </p>
           <p>
             Contract Value: {web3 ? web3.fromWei(contractValue, 'ether').toString() : 0} Ether
+          </p>
+          <p>
+            Total capsules created: {totalCapsules}
+          </p>
+          <p>
+            Total value: {web3 ? web3.fromWei(totalValue, 'ether').toString() : 0} Ether
+          </p>
+          <p>
+            Total buried capsules: {totalBuriedCapsules}
+          </p>
+          <p>
+            Total buried value: {web3 ? web3.fromWei(totalBuriedValue, 'ether').toString() : 0} Ether
           </p>
         </div>
       </MuiThemeProvider>
