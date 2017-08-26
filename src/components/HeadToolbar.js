@@ -9,19 +9,22 @@ import NavigationExpandMoreIcon from 'material-ui/svg-icons/navigation/expand-mo
 
 const MatchText = ({ match }) => {
   let text;
-  
+
   switch (match.url) {
     case '/':
-      text = 'Capsules';
+      text = 'Your Capsules';
+      break;
+    case '/view':
+      text = 'Capsule Information';
       break;
     case '/create':
       text = 'Bury a Capsule';
       break;
-    case '/dig':
-      text = 'Dig up a Capsule';
+    case '/instructions':
+      text = 'Instructions';
       break;
     default:
-      text = 'Capsule Information';
+      text = '';
   }
 
   return <div>{text}</div>;
@@ -34,7 +37,9 @@ const HeadToolbar = (props) => {
       <ToolbarGroup firstChild={true} disabled={true}>
         <h3 style={{ fontWeight: 400 }}>
           <Route exact path="/" component={MatchText} />
-          <Route exact path="/:id" component={MatchText} />
+          <Route path="/view" component={MatchText} />
+          <Route path="/create" component={MatchText} />
+          <Route path="/instructions" component={MatchText} />
         </h3>
       </ToolbarGroup>
       <ToolbarGroup>
@@ -54,10 +59,12 @@ const HeadToolbar = (props) => {
             <Link to="/create">
               Bury a Capsule
             </Link>
-          }>
-          </MenuItem>
-          <MenuItem primaryText="Instructions" />
-          <MenuItem primaryText="FAQ" />
+          }/>
+          <MenuItem primaryText={
+            <Link to="/instructions">
+              Instructions
+            </Link>
+          }/>
           <MenuItem primaryText="Contract" />
         </IconMenu>
       </ToolbarGroup>

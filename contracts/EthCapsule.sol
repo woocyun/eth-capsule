@@ -5,7 +5,7 @@ contract EthCapsule {
     uint numCapsules;
     mapping (uint => Capsule) capsules;
   }
-  
+
   mapping (address => Depositor) depositors;
 
   struct Capsule {
@@ -67,9 +67,5 @@ contract EthCapsule {
         depositors[msg.sender].capsules[capsuleNum].unlockTime,
         depositors[msg.sender].capsules[capsuleNum].withdrawnTime
     );
-  }
-
-  function getContractValue() constant returns (uint) {
-      return this.balance;
   }
 }

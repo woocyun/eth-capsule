@@ -13,7 +13,7 @@ const Capsules = (props) => {
   const {
     capsules,
     capsulesLoading,
-    onCapsuleRedirect,
+    onCapsuleSelect,
     web3
   } = props;
 
@@ -29,7 +29,7 @@ const Capsules = (props) => {
         <List>
           {capsules.map((capsule, idx) => (
             <ListItem
-              onClick={onCapsuleRedirect(capsule.id)}
+              onClick={onCapsuleSelect(capsule.id, true)}
               primaryText={`
                 ${moment(capsule.unlockTime * 1000).format('MMM Do YYYY h:mm a')}
                 (${web3.fromWei(capsule.value, 'ether')} ether)

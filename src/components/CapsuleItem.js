@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {Component} from 'react';
 import moment from 'moment';
 
 import {
@@ -11,14 +11,15 @@ import RaisedButton from 'material-ui/RaisedButton';
 
 const CapsuleItem = (props) => {
   const {
-    capsules,
-    capsuleId,
+    capsule,
     onWithdraw,
+    // paramId,
+    // selectCapsule,
+    valueWhenBuried,
+    valueWhenUnlocked,
     web3
-  } = props;
-
-  const capsule = capsules.find(capsule => capsule.id === Number(capsuleId));
-
+  } = props;  
+  
   return (
     <div>
       {capsule ?
@@ -30,7 +31,7 @@ const CapsuleItem = (props) => {
                   Value:
                 </TableRowColumn>
                 <TableRowColumn>
-                  {web3.fromWei(capsule.value, 'ether').toString()} Ether
+                  {web3 && web3.fromWei(capsule.value, 'ether').toString()} Ether
                 </TableRowColumn>
               </TableRow>
               <TableRow>
@@ -41,6 +42,14 @@ const CapsuleItem = (props) => {
                   {moment(capsule.lockTime * 1000).format('hh:mm A on MMMM Do, YYYY')}
                 </TableRowColumn>
               </TableRow>
+              {/* <TableRow>
+                <TableRowColumn>
+                  Value when buried:
+                </TableRowColumn>
+                <TableRowColumn>
+                  {web3 && `$${(web3.fromWei(capsule.value, 'ether') * valueWhenBuried).toFixed(2)} ($${valueWhenBuried}/Ether)`}
+                </TableRowColumn>
+              </TableRow> */}
               <TableRow>
                 <TableRowColumn>
                   Date of unlock:
@@ -49,6 +58,14 @@ const CapsuleItem = (props) => {
                   {moment(capsule.unlockTime * 1000).format('hh:mm A on MMMM Do, YYYY')}
                 </TableRowColumn>
               </TableRow>
+              {/* <TableRow>
+                <TableRowColumn>
+                  Value when unlocked:
+                </TableRowColumn>
+                <TableRowColumn>
+                  {new Date(capsule.unlockTime * 1000) < new Date() ? web3 && `$${(web3.fromWei(capsule.value, 'ether') * valueWhenUnlocked).toFixed(2)} ($${valueWhenUnlocked}/Ether)` : 'Not yet unlocked'}
+                </TableRowColumn>
+              </TableRow> */}
               <TableRow>
                 <TableRowColumn>
                   Date opened:
