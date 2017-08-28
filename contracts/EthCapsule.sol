@@ -22,7 +22,7 @@ contract EthCapsule {
   uint public totalBuriedValue;
 
   function bury(uint duration) payable {
-    require(msg.value > 0);
+    require(msg.value >= 1000000000000000);
     
     if (depositors[msg.sender].numCapsules <= 0) {
         depositors[msg.sender] = Depositor({numCapsules: 0});
