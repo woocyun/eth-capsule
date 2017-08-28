@@ -19,7 +19,7 @@ contract EthCapsule {
   uint public totalCapsules;
   uint public totalValue;
   uint public totalBuriedCapsules;
-  uint public totalBuriedValue;
+  // uint public totalBuriedValue;
 
   function bury(uint duration) payable {
     require(msg.value >= 1000000000000000);
@@ -31,7 +31,7 @@ contract EthCapsule {
     totalCapsules++;
     totalValue += msg.value;
     totalBuriedCapsules++;
-    totalBuriedValue = totalBuriedValue + msg.value;
+    // totalBuriedValue = totalBuriedValue + msg.value;
 
     depositors[msg.sender].numCapsules++;
     Depositor storage depositor = depositors[msg.sender];
@@ -50,7 +50,7 @@ contract EthCapsule {
     require(capsule.unlockTime < block.timestamp && capsule.withdrawnTime == 0);
 
     totalBuriedCapsules--;
-    totalBuriedValue -= capsule.value;
+    // totalBuriedValue -= capsule.value;
     capsule.withdrawnTime = block.timestamp;
     msg.sender.transfer(capsule.value);
   }
@@ -67,5 +67,9 @@ contract EthCapsule {
         depositors[msg.sender].capsules[capsuleNum].unlockTime,
         depositors[msg.sender].capsules[capsuleNum].withdrawnTime
     );
+  }
+
+  function totalBuriedValue() constant returns (uint) {
+    return this.balance;
   }
 }

@@ -19,6 +19,7 @@ import CapsuleItem from './components/CapsuleItem.js';
 import CreateCapsule from './components/CreateCapsule';
 import CommunityStats from './components/CommunityStats';
 import Instructions from './components/Instructions';
+import Loading from './components/Loading';
 
 const VIEW_PATH = '/view/';
 
@@ -34,13 +35,15 @@ class App extends Component {
       contractInstance: null,
       contractValue: 0,
       depositedValue: 0,
+      depositing: false,
       totalCapsules: 0,
       totalValue: 0,
       totalBuriedCapsules: 0,
       getTotalBuriedValue: 0,
       valueWhenBuried: 0,
       valueWhenUnlocked: 0,
-      web3: null
+      web3: null,
+      withdrawing: false
     };
 
     this.getWeb3 = this.getWeb3.bind(this);
@@ -223,13 +226,20 @@ class App extends Component {
     } = this.state;
 
     return () => {
+      this.setState({ depositing: true });
+
       return contractInstance.bury(
         new Date(new Date(moment(dateValue).format('ddd MMM DD YYYY') + ' ' + moment(timeValue).format('HH:mm:ss')) - new Date()) / 1000, {
           from: account,
           value: web3.toWei(depositValue, 'ether'),
         })
         .then(() => {
+          this.setState({ depositing: false });
           this.props.history.push('/');
+        })
+        .catch(error => {
+          this.setState({ depositing: false });
+          console.log('handleDeposit caught:', error);
         });
     };
   }
@@ -241,11 +251,18 @@ class App extends Component {
     } = this.state;
 
     return () => {
+      this.setState({ depositing: true });
+
       return contractInstance.dig(id, {
         from: account
       })
         .then(response => {
+          this.setState({ depositing: false });
           this.props.history.push('/');
+        })
+        .catch(error => {
+          this.setState({ depositing: false });
+          console.log('handleWithdraw caught:', error);
         });
     };
   }
@@ -285,6 +302,7 @@ class App extends Component {
       capsules,
       capsulesLoading,
       // contractValue,
+      depositing,
       totalCapsules,
       totalValue,
       totalBuriedCapsules,
@@ -341,12 +359,15 @@ class App extends Component {
             titleStyle={{ fontWeight: 100 }}
             iconStyleLeft={{ display: 'none' }}
           />
-          <Paper style={{ maxWidth: 1000, margin: '40px auto' }}>
+          <Paper style={{ maxWidth: 1000, margin: '40px auto', position: 'relative' }}>
             <HeadToolbar />
             <Route exact path="/" component={capsulesComponent} />
             <Route path="/view/:id" component={capsuleItemComponent} />
             <Route path="/create" component={createComponent} />
             <Route path="/instructions" component={instructionsComponent} />
+            {depositing &&
+              <Loading />
+            }
           </Paper>
           <Paper style={{ maxWidth: 1000, margin: '40px auto' }}>
             <CommunityStats
