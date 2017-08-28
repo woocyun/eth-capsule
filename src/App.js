@@ -251,17 +251,17 @@ class App extends Component {
     } = this.state;
 
     return () => {
-      this.setState({ depositing: true });
+      this.setState({ withdrawing: true });
 
       return contractInstance.dig(id, {
         from: account
       })
         .then(response => {
-          this.setState({ depositing: false });
+          this.setState({ withdrawing: false });
           this.props.history.push('/');
         })
         .catch(error => {
-          this.setState({ depositing: false });
+          this.setState({ withdrawing: false });
           console.log('handleWithdraw caught:', error);
         });
     };
@@ -309,7 +309,8 @@ class App extends Component {
       totalBuriedValue,
       valueWhenBuried,
       valueWhenUnlocked,
-      web3
+      web3,
+      withdrawing
     } = this.state;
 
     const {
@@ -365,7 +366,7 @@ class App extends Component {
             <Route path="/view/:id" component={capsuleItemComponent} />
             <Route path="/create" component={createComponent} />
             <Route path="/instructions" component={instructionsComponent} />
-            {depositing &&
+            {(depositing || withdrawing) &&
               <Loading />
             }
           </Paper>
