@@ -1,4 +1,4 @@
-import React, {Component} from 'react';
+import React from 'react';
 import moment from 'moment';
 
 import {
@@ -15,8 +15,8 @@ const CapsuleItem = (props) => {
     onWithdraw,
     // paramId,
     // selectCapsule,
-    valueWhenBuried,
-    valueWhenUnlocked,
+    // valueWhenBuried,
+    // valueWhenUnlocked,
     web3
   } = props;  
   
@@ -85,7 +85,7 @@ const CapsuleItem = (props) => {
                         'Locked' :
                         'Open'
                       }
-                      disabled={new Date(capsule.unlockTime * 1000) > new Date()}
+                      //disabled={new Date(capsule.unlockTime * 1000) > new Date()}
                       primary={true}
                       onClick={onWithdraw(capsule.id)}
                     />

@@ -1,6 +1,7 @@
 import React, { Component } from 'react';
 import { Route } from 'react-router-dom';
 import axios from 'axios';
+import moment from 'moment';
 
 import EthCapsuleContract from '../build/contracts/EthCapsule.json';
 import getWeb3 from './utils/getWeb3';
@@ -44,9 +45,7 @@ class App extends Component {
 
     this.getWeb3 = this.getWeb3.bind(this);
     this.getAccounts = this.getAccounts.bind(this);
-    this.getBalance = this.getBalance.bind(this);
     this.instantiateContract = this.instantiateContract.bind(this);
-    this.getContractValue = this.getContractValue.bind(this);
     this.getNumberOfCapsules = this.getNumberOfCapsules.bind(this);
     this.getCapsules = this.getCapsules.bind(this);
     this.getCapsuleInfo = this.getCapsuleInfo.bind(this);
@@ -55,6 +54,7 @@ class App extends Component {
     this.getTotalBuriedCapsules = this.getTotalBuriedCapsules.bind(this);
     this.getTotalBuriedValue = this.getTotalBuriedValue.bind(this);
     this.handleCapsuleSelect = this.handleCapsuleSelect.bind(this);
+    this.handleDeposit = this.handleDeposit.bind(this);
     this.handleWithdraw = this.handleWithdraw.bind(this);
     this.ifOnViewPage = this.ifOnViewPage.bind(this);
     this.ifReloadedOnViewPage = this.ifReloadedOnViewPage.bind(this);
@@ -63,12 +63,10 @@ class App extends Component {
   componentDidMount() {
     this.getWeb3()
       .then(this.getAccounts)
-      .then(this.getBalance)
       .then(this.instantiateContract)
       .then(this.getNumberOfCapsules)
       .then(this.getCapsules)
       .then(this.ifReloadedOnViewPage)
-      .then(this.getContractValue)
       .then(this.getTotalCapsules)
       .then(this.getTotalValue)
       .then(this.getTotalBuriedCapsules)
@@ -80,8 +78,6 @@ class App extends Component {
           .then(this.getCapsules);
         
         this.getAccounts()
-          .then(this.getBalance)
-          .then(this.getContractValue)
           .then(this.getTotalCapsules)
           .then(this.getTotalValue)
           .then(this.getTotalBuriedCapsules)
@@ -122,34 +118,23 @@ class App extends Component {
       });
   }
 
-  getBalance() {
-    return new Promise((resolve, reject) => {
-      this.state.web3.eth.getBalance(this.state.account, undefined, (err, balance) => {
-        if (!err) {
-          resolve(balance);
-        } else {
-          reject(err);
-        }
-      });
-    })
-      .then(balance => {
-        this.setState({ balance });
-      });
-  }
-
   getNumberOfCapsules() {
     this.setState({
       capsulesLoading: true
     });
 
-    return this.state.contractInstance.getNumberOfCapsules()
+    return this.state.contractInstance.getNumberOfCapsules({
+      from: this.state.account
+    })
       .then(capsules => {
         return capsules.toNumber();
       });
   }
 
   getCapsuleInfo(id) {
-    return this.state.contractInstance.getCapsuleInfo(id)
+    return this.state.contractInstance.getCapsuleInfo(id, {
+      from: this.state.account
+    })
       .then(response => {
         return {
           value: response[0].toNumber(),
@@ -171,16 +156,6 @@ class App extends Component {
         this.setState({
           capsules: capsules.sort((prevCap, nextCap) => prevCap.unlockTime < nextCap.unlockTime),
           capsulesLoading: false
-        });
-      });
-  }
-
-  getContractValue() {
-    return this.state.contractInstance.getContractValue()
-      .then(response => response.toNumber())
-      .then(contractValue => {
-        this.setState({
-          contractValue
         });
       });
   }
@@ -240,6 +215,25 @@ class App extends Component {
     };
   }
 
+  handleDeposit({ dateValue, timeValue, depositValue }) {
+    const {
+      account,
+      contractInstance,
+      web3
+    } = this.state;
+
+    return () => {
+      return contractInstance.bury(
+        new Date(new Date(moment(dateValue).format('ddd MMM DD YYYY') + ' ' + moment(timeValue).format('HH:mm:ss')) - new Date()) / 1000, {
+          from: account,
+          value: web3.toWei(depositValue, 'ether'),
+        })
+        .then(() => {
+          this.props.history.push('/');
+        });
+    };
+  }
+
   handleWithdraw(id) {
     const {
       account,
@@ -248,9 +242,7 @@ class App extends Component {
 
     return () => {
       return contractInstance.dig(id, {
-        from: account,
-        gas: 3000000,
-        gasPrice: 1000
+        from: account
       })
         .then(response => {
           this.props.history.push('/');
@@ -289,12 +281,9 @@ class App extends Component {
 
   render() {
     const {
-      account,
-      // balance,
       capsule,
       capsules,
       capsulesLoading,
-      contractInstance,
       // contractValue,
       totalCapsules,
       totalValue,
@@ -307,6 +296,7 @@ class App extends Component {
 
     const {
       handleCapsuleSelect,
+      handleDeposit,
       handleWithdraw
     } = this;
 
@@ -334,10 +324,7 @@ class App extends Component {
 
     const createComponent = (props) => (
       <CreateCapsule
-        account={account}
-        contractInstance={contractInstance}
-        web3={web3}
-        history={props.history}
+        onDeposit={handleDeposit}
       />
     );
 

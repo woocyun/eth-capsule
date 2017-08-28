@@ -1,5 +1,4 @@
 import React, { Component } from 'react';
-import moment from 'moment';
 
 import Sheet from './Sheet';
 import DatePicker from 'material-ui/DatePicker';
@@ -12,70 +11,60 @@ class CreateCapsule extends Component {
     super(props);
 
     this.state = {
-      depositValue: 0,
-      dateValue: null,
-      timeValue: null
+      formValues: {
+        depositValue: 0,
+        dateValue: null,
+        timeValue: null
+      }
     };
 
     this.handleDepositChange = this.handleDepositChange.bind(this);
     this.handleDateSelect = this.handleDateSelect.bind(this);
     this.handleTimeSelect = this.handleTimeSelect.bind(this);
-    this.handleDeposit = this.handleDeposit.bind(this);
   }
 
   handleDepositChange(evt, depositValue) {
-    this.setState({ depositValue });
+    this.setState(prevState => {
+      return {
+        formValues: Object.assign({}, prevState.formValues, {
+          depositValue
+        })
+      };
+    });
   }
 
   handleDateSelect(ignore, dateValue) {
-    this.setState({ dateValue });
+    this.setState(prevState => {
+      return {
+        formValues: Object.assign({}, prevState.formValues, {
+          dateValue
+        })
+      };
+    });
   }
 
   handleTimeSelect(ignore, timeValue) {
-    this.setState({ timeValue });
-  }
-
-  handleDeposit() {
-    const {
-      contractInstance,
-      account,
-      web3,
-      history
-    } = this.props;
-
-    const {
-      dateValue,
-      timeValue,
-      depositValue
-    } = this.state;
-
-    contractInstance.bury(
-      new Date(new Date(moment(dateValue).format('ddd MMM DD YYYY') + ' ' + moment(timeValue).format('HH:mm:ss')) - new Date()) / 1000,
-      {
-        from: account,
-        value: web3.toWei(depositValue, 'ether'),
-        gas: 3000000,
-        gasPrice: 1000
-      }
-    )
-      .then(() => {
-        history.push('/');
-      });
+    this.setState(prevState => {
+      return {
+        formValues: Object.assign({}, prevState.formValues, {
+          timeValue
+        })
+      };
+    });
   }
 
   render() {
     const {
       handleDepositChange,
       handleDateSelect,
-      handleTimeSelect,
-      handleDeposit
+      handleTimeSelect
     } = this;
 
     const {
       dateValue,
       timeValue,
       depositValue
-    } = this.state;
+    } = this.state.formValues;
   
     return (
       <div style={{ padding: '40px 0', textAlign: 'center' }}>
@@ -101,6 +90,7 @@ class CreateCapsule extends Component {
             <TextField
               floatingLabelText="Amount to Deposit"
               type="number"
+              min={0.001}
               value={depositValue}
               onChange={handleDepositChange}
             />
@@ -110,7 +100,7 @@ class CreateCapsule extends Component {
             <RaisedButton
               label="Bury"
               primary={true}
-              onClick={handleDeposit}
+              onClick={this.props.onDeposit(this.state.formValues)}
             />
           </div>
         </Sheet>
