@@ -1,6 +1,8 @@
-pragma solidity ^0.4.2;
+pragma solidity ^0.4.11;
 
-contract EthCapsule {
+import './Ownable.sol';
+
+contract EthCapsule is Ownable {
   struct Depositor {
     uint numCapsules;
     mapping (uint => Capsule) capsules;
@@ -16,30 +18,31 @@ contract EthCapsule {
     uint withdrawnTime;
   }
 
+  uint public minDeposit = 1000000000000000;
   uint public totalCapsules;
   uint public totalValue;
   uint public totalBuriedCapsules;
 
   function bury(uint duration) payable {
-    require(msg.value >= 1000000000000000);
+    require(msg.value >= minDeposit);
     
     if (depositors[msg.sender].numCapsules <= 0) {
-        depositors[msg.sender] = Depositor({numCapsules: 0});
+        depositors[msg.sender] = Depositor({ numCapsules: 0 });
     }
 
-    totalCapsules++;
-    totalValue += msg.value;
-    totalBuriedCapsules++;
-
-    depositors[msg.sender].numCapsules++;
     Depositor storage depositor = depositors[msg.sender];
-    depositor.capsules[depositor.numCapsules] = Capsule({
+    
+    depositor.capsules[++depositor.numCapsules] = Capsule({
         value: msg.value,
         id: depositors[msg.sender].numCapsules,
         lockTime: block.timestamp,
         unlockTime: block.timestamp + duration,
         withdrawnTime: 0
     });
+
+    totalBuriedCapsules++;
+    totalCapsules++;
+    totalValue += msg.value;
   }
 
   function dig(uint capsuleNumber) {
@@ -51,9 +54,9 @@ contract EthCapsule {
     capsule.withdrawnTime = block.timestamp;
     msg.sender.transfer(capsule.value);
   }
-  
-  function getNumberOfCapsules() constant returns (uint) {
-    return depositors[msg.sender].numCapsules;
+
+  function setMinDeposit(uint min) onlyOwner {
+    minDeposit = min;
   }
   
   function getCapsuleInfo(uint capsuleNum) constant returns (uint, uint, uint, uint, uint) {
@@ -64,6 +67,10 @@ contract EthCapsule {
         depositors[msg.sender].capsules[capsuleNum].unlockTime,
         depositors[msg.sender].capsules[capsuleNum].withdrawnTime
     );
+  }
+
+  function getNumberOfCapsules() constant returns (uint) {
+    return depositors[msg.sender].numCapsules;
   }
 
   function totalBuriedValue() constant returns (uint) {

@@ -233,7 +233,8 @@ class App extends Component {
           from: account,
           value: web3.toWei(depositValue, 'ether'),
         })
-        .then(() => {
+        .then(response => {
+          // console.log(response);
           this.setState({ depositing: false });
           this.props.history.push('/');
         })
@@ -257,6 +258,7 @@ class App extends Component {
         from: account
       })
         .then(response => {
+          // console.log(response);
           this.setState({ withdrawing: false });
           this.props.history.push('/');
         })
