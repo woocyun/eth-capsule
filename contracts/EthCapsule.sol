@@ -19,6 +19,7 @@ contract EthCapsule is Ownable {
   }
 
   uint public minDeposit = 1000000000000000;
+  uint public maxDuration = 157680000;
   uint public totalCapsules;
   uint public totalValue;
   uint public totalBuriedCapsules;
@@ -31,7 +32,7 @@ contract EthCapsule is Ownable {
     }
 
     Depositor storage depositor = depositors[msg.sender];
-    
+
     depositor.capsules[++depositor.numCapsules] = Capsule({
         value: msg.value,
         id: depositors[msg.sender].numCapsules,
@@ -57,6 +58,10 @@ contract EthCapsule is Ownable {
 
   function setMinDeposit(uint min) onlyOwner {
     minDeposit = min;
+  }
+
+  function setMaxDuration(uint max) onlyOwner {
+    maxDuration = max;
   }
   
   function getCapsuleInfo(uint capsuleNum) constant returns (uint, uint, uint, uint, uint) {
