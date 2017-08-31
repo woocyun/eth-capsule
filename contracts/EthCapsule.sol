@@ -49,7 +49,7 @@ contract EthCapsule is Ownable {
   function dig(uint capsuleNumber) {
     Capsule storage capsule = depositors[msg.sender].capsules[capsuleNumber];
 
-    require(capsule.unlockTime < block.timestamp && capsule.withdrawnTime == 0);
+    require(capsule.unlockTime <= block.timestamp && capsule.withdrawnTime == 0);
 
     totalBuriedCapsules--;
     capsule.withdrawnTime = block.timestamp;
