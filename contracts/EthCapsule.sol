@@ -1,6 +1,7 @@
 pragma solidity ^0.4.11;
 
 import './Ownable.sol';
+import './SafeMath.sol';
 
 contract EthCapsule is Ownable {
   struct Depositor {
@@ -19,6 +20,7 @@ contract EthCapsule is Ownable {
   }
 
   uint public minDeposit = 1000000000000000;
+  uint public minDuration = 0;
   uint public maxDuration = 157680000;
   uint public totalCapsules;
   uint public totalValue;
@@ -26,6 +28,8 @@ contract EthCapsule is Ownable {
 
   function bury(uint duration) payable {
     require(msg.value >= minDeposit);
+    require(duration >= minDuration);
+    require(duration <= maxDuration);
     
     if (depositors[msg.sender].numCapsules <= 0) {
         depositors[msg.sender] = Depositor({ numCapsules: 0 });
@@ -33,23 +37,25 @@ contract EthCapsule is Ownable {
 
     Depositor storage depositor = depositors[msg.sender];
 
-    depositor.capsules[++depositor.numCapsules] = Capsule({
+    depositor.numCapsules++;
+    depositor.capsules[depositor.numCapsules] = Capsule({
         value: msg.value,
         id: depositors[msg.sender].numCapsules,
         lockTime: block.timestamp,
-        unlockTime: block.timestamp + duration,
+        unlockTime: SafeMath.add(block.timestamp, duration),
         withdrawnTime: 0
     });
 
     totalBuriedCapsules++;
     totalCapsules++;
-    totalValue += msg.value;
+    totalValue = SafeMath.add(totalValue, msg.value);
   }
 
   function dig(uint capsuleNumber) {
     Capsule storage capsule = depositors[msg.sender].capsules[capsuleNumber];
 
-    require(capsule.unlockTime <= block.timestamp && capsule.withdrawnTime == 0);
+    require(capsule.unlockTime <= block.timestamp);
+    require(capsule.withdrawnTime == 0);
 
     totalBuriedCapsules--;
     capsule.withdrawnTime = block.timestamp;
@@ -58,6 +64,10 @@ contract EthCapsule is Ownable {
 
   function setMinDeposit(uint min) onlyOwner {
     minDeposit = min;
+  }
+
+  function setMinDuration(uint min) onlyOwner {
+    minDuration = min;
   }
 
   function setMaxDuration(uint max) onlyOwner {

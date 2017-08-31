@@ -85,7 +85,7 @@ const CapsuleItem = (props) => {
                         'Locked' :
                         'Open'
                       }
-                      //disabled={new Date(capsule.unlockTime * 1000) > new Date()}
+                      disabled={new Date(capsule.unlockTime * 1000) > new Date()}
                       primary={true}
                       onClick={onWithdraw(capsule.id)}
                     />

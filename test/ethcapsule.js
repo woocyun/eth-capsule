@@ -80,6 +80,23 @@ contract('EthCapsule', accounts => {
       });
   });
 
+  it('should prevent users from burying with a duration over the max duration', function (done) {
+    const account = accounts[1];
+    const msgValue = ether(1.123);
+    const unlockDuration = DEFAULT_MAX_DURATION + 1;
+
+    this.ethcapsule.bury(unlockDuration, {
+      from: account,
+      value: msgValue
+    })
+      .then(() => {
+        assert.fail('should have thrown before');
+      }, error => {
+        assertJump(error);
+        done();
+      });
+  });
+
   it('should prevent users from burying less than the minimum deposit', function (done) {
     const account = accounts[1];
     const msgValue = DEFAULT_MIN_DEPOSIT - ether(0.00001);
@@ -118,6 +135,37 @@ contract('EthCapsule', accounts => {
     const minDepositToSet = ether(0.002);
     
     this.ethcapsule.setMinDeposit(minDepositToSet, {
+      from: account
+    })
+      .then(() => {
+        assert.fail('should have thrown before');
+      }, error => {
+        assertJump(error);
+        done();
+      });
+  });
+
+  it('should allow owner to set min duration', function (done) {
+    const owner = accounts[0];
+    const minDurationToSet = duration.minutes(5);
+
+    this.ethcapsule.setMinDuration(minDurationToSet, {
+      from: owner
+    })
+      .then(() => {
+        return this.ethcapsule.minDuration()
+          .then(minDuration => {
+            assert.equal(minDurationToSet, minDuration.toNumber());
+            done();
+          });
+      });
+  });
+
+  it('should prevent non-owners from setting min duration', function (done) {
+    const account = accounts[1];
+    const minDurationToSet = duration.minutes(5);
+    
+    this.ethcapsule.setMinDuration(minDurationToSet, {
       from: account
     })
       .then(() => {
