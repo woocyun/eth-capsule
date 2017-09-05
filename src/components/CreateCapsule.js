@@ -15,17 +15,22 @@ class CreateCapsule extends Component {
         depositValue: 0,
         dateValue: null,
         timeValue: null
-      }
+      },
+      dateError: '',
+      timeError: '',
+      valueError: ''
     };
 
     this.handleDepositChange = this.handleDepositChange.bind(this);
     this.handleDateSelect = this.handleDateSelect.bind(this);
     this.handleTimeSelect = this.handleTimeSelect.bind(this);
+    this.verifyAndSubmit = this.verifyAndSubmit.bind(this);
   }
 
   handleDepositChange(evt, depositValue) {
     this.setState(prevState => {
       return {
+        valueError: '',
         formValues: Object.assign({}, prevState.formValues, {
           depositValue
         })
@@ -36,6 +41,7 @@ class CreateCapsule extends Component {
   handleDateSelect(ignore, dateValue) {
     this.setState(prevState => {
       return {
+        dateError: '',
         formValues: Object.assign({}, prevState.formValues, {
           dateValue
         })
@@ -46,11 +52,53 @@ class CreateCapsule extends Component {
   handleTimeSelect(ignore, timeValue) {
     this.setState(prevState => {
       return {
+        timeError: '',
         formValues: Object.assign({}, prevState.formValues, {
           timeValue
         })
       };
     });
+  }
+
+  verifyAndSubmit() {
+    const {
+      formValues,
+      formValues: {
+        dateValue,
+        timeValue,
+        depositValue
+      }
+    } = this.state;
+
+    const dateRequired = !dateValue;
+    const timeRequired = !timeValue;
+    const valueRequired = depositValue === '';
+    const valueTooLow = depositValue <= 0;
+
+    if (dateRequired) {
+      this.setState({
+        dateError: 'Date is required.'
+      });
+    }
+
+    if (timeRequired) {
+      this.setState({
+        timeError: 'Time is required.'
+      });
+    }
+
+    if (valueRequired) {
+      this.setState({
+        valueError: 'Amount is required.'
+      });
+    } else if (valueTooLow) {
+      this.setState({
+        valueError: 'Please input a value greater than 0.'
+      });
+    }
+
+    if (dateRequired || timeRequired || valueRequired || valueTooLow) return;
+    this.props.onDeposit(formValues);
   }
 
   render() {
@@ -61,16 +109,22 @@ class CreateCapsule extends Component {
     } = this;
 
     const {
-      dateValue,
-      timeValue,
-      depositValue
-    } = this.state.formValues;
+      dateError,
+      timeError,
+      valueError,
+      formValues: {
+        dateValue,
+        timeValue,
+        depositValue
+      }
+    } = this.state;
   
     return (
       <div style={{ padding: '40px 0', textAlign: 'center' }}>
         <Sheet>
           <div>
             <DatePicker
+              errorText={dateError}
               hintText="Date"
               value={dateValue}
               onChange={handleDateSelect}
@@ -79,6 +133,7 @@ class CreateCapsule extends Component {
           <br />
           <div>
             <TimePicker
+              errorText={timeError}
               format="ampm"
               hintText="Time"
               value={timeValue}
@@ -88,6 +143,7 @@ class CreateCapsule extends Component {
           <br />
           <div>
             <TextField
+              errorText={valueError}
               floatingLabelText="Amount to Deposit"
               type="number"
               min={0.001}
@@ -100,7 +156,7 @@ class CreateCapsule extends Component {
             <RaisedButton
               label="Bury"
               primary={true}
-              onClick={this.props.onDeposit(this.state.formValues)}
+              onClick={this.verifyAndSubmit}
             />
           </div>
         </Sheet>

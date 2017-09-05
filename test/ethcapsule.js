@@ -10,6 +10,7 @@ const EthCapsule = artifacts.require("./EthCapsule.sol");
 
 contract('EthCapsule', accounts => {
   const DEFAULT_MIN_DEPOSIT = ether(0.001);
+  const DEFAULT_MIN_DURATION = 0;
   const DEFAULT_MAX_DURATION = duration.years(5);
 
   beforeEach(function () {
@@ -84,6 +85,23 @@ contract('EthCapsule', accounts => {
     const account = accounts[1];
     const msgValue = ether(1.123);
     const unlockDuration = DEFAULT_MAX_DURATION + 1;
+
+    this.ethcapsule.bury(unlockDuration, {
+      from: account,
+      value: msgValue
+    })
+      .then(() => {
+        assert.fail('should have thrown before');
+      }, error => {
+        assertJump(error);
+        done();
+      });
+  });
+
+  it('should prevent users from burying with a duration below the min duration', function (done) {
+    const account = accounts[1];
+    const msgValue = ether(1.123);
+    const unlockDuration = DEFAULT_MIN_DURATION - 1;
 
     this.ethcapsule.bury(unlockDuration, {
       from: account,

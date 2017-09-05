@@ -225,24 +225,24 @@ class App extends Component {
       web3
     } = this.state;
 
-    return () => {
-      this.setState({ depositing: true });
+    const selectedDateTime = new Date(moment(dateValue).format('ddd MMM DD YYYY') + ' ' + moment(timeValue).format('HH:mm:ss'));
+    const secondsFromNow = parseInt((selectedDateTime - new Date()) / 1000, 10);
 
-      return contractInstance.bury(
-        new Date(new Date(moment(dateValue).format('ddd MMM DD YYYY') + ' ' + moment(timeValue).format('HH:mm:ss')) - new Date()) / 1000, {
-          from: account,
-          value: web3.toWei(depositValue, 'ether'),
-        })
-        .then(response => {
-          // console.log(response);
-          this.setState({ depositing: false });
-          this.props.history.push('/');
-        })
-        .catch(error => {
-          this.setState({ depositing: false });
-          console.log('handleDeposit caught:', error);
-        });
-    };
+    return contractInstance.bury(
+      secondsFromNow >= 0 ? secondsFromNow : 0,
+      {
+        from: account,
+        value: web3.toWei(depositValue, 'ether'),
+      }
+    )
+      .then(response => {
+        this.setState({ depositing: false });
+        this.props.history.push('/');
+      })
+      .catch(error => {
+        this.setState({ depositing: false });
+        console.log('handleDeposit caught:', error);
+      });
   }
 
   handleWithdraw(id) {
