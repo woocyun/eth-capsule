@@ -1,4 +1,5 @@
 import React, { Component } from 'react';
+import moment from 'moment';
 
 import Sheet from './Sheet';
 import DatePicker from 'material-ui/DatePicker';
@@ -6,6 +7,8 @@ import TimePicker from 'material-ui/TimePicker';
 import RaisedButton from 'material-ui/RaisedButton';
 import TextField from 'material-ui/TextField';
 import Divider from 'material-ui/Divider';
+import Dialog from 'material-ui/Dialog';
+import FlatButton from 'material-ui/FlatButton';
 
 class CreateCapsule extends Component {
   constructor(props){
@@ -20,6 +23,7 @@ class CreateCapsule extends Component {
     } = props;
 
     this.state = {
+      dialogOpen: false,
       formValues: {
         depositValue: value,
         dateValue: date,
@@ -30,10 +34,11 @@ class CreateCapsule extends Component {
       valueError: ''
     };
 
+    this.closeSummaryModal = this.closeSummaryModal.bind(this);
     this.handleDepositChange = this.handleDepositChange.bind(this);
     this.handleDateSelect = this.handleDateSelect.bind(this);
     this.handleTimeSelect = this.handleTimeSelect.bind(this);
-    this.verifyAndSubmit = this.verifyAndSubmit.bind(this);
+    this.checkFormAndOpenSummaryModal = this.checkFormAndOpenSummaryModal.bind(this);
   }
 
   handleDepositChange(evt, depositValue) {
@@ -69,9 +74,16 @@ class CreateCapsule extends Component {
     });
   }
 
-  verifyAndSubmit() {
+  closeSummaryModal() {
+    this.setState({ dialogOpen: false });
+  }
+
+  openSummaryModal() {
+    this.setState({ dialogOpen: true });
+  }
+
+  checkFormAndOpenSummaryModal() {
     const {
-      formValues,
       formValues: {
         dateValue,
         timeValue,
@@ -107,26 +119,44 @@ class CreateCapsule extends Component {
     }
 
     if (dateRequired || timeRequired || valueRequired || valueTooLow) return;
-    this.props.onDeposit(formValues);
+
+    this.openSummaryModal();
   }
 
   render() {
     const {
+      closeSummaryModal,
       handleDepositChange,
       handleDateSelect,
-      handleTimeSelect
+      handleTimeSelect,
+      checkFormAndOpenSummaryModal
     } = this;
 
     const {
       dateError,
+      dialogOpen,
       timeError,
       valueError,
+      formValues,
       formValues: {
         dateValue,
         timeValue,
         depositValue
       }
     } = this.state;
+
+    const actions = [
+      <FlatButton
+        label="Cancel"
+        primary={true}
+        onClick={closeSummaryModal}
+      />,
+      <FlatButton
+        label="Confirm"
+        primary={true}
+        onClick={this.props.onDeposit(formValues)}
+      />,
+    ];
   
     return (
       <div style={{ padding: '40px 0', textAlign: 'center' }}>
@@ -165,7 +195,7 @@ class CreateCapsule extends Component {
             <RaisedButton
               label="Bury"
               primary={true}
-              onClick={this.verifyAndSubmit}
+              onClick={checkFormAndOpenSummaryModal}
             />
           </div>
           <div style={{ fontSize: 11, textAlign: 'left', padding: 30, marginTop: 75 }}>
@@ -173,6 +203,14 @@ class CreateCapsule extends Component {
             <Divider />
             <p>* Current min lock duration is 0. Setting the date before the current time will automatically default to a 0 duration, which means your capsule will be immediately available to dig up.</p>
           </div>
+          <Dialog
+            actions={actions}
+            modal={false}
+            open={dialogOpen}
+            onRequestClose={closeSummaryModal}
+          >
+            Bury {depositValue} ether until {timeValue ? moment(timeValue).format('HH:mm A') : '' } on {dateValue ? moment(dateValue).format('MMMM Do, YYYY') : ''}?
+          </Dialog>
         </Sheet>
       </div>
     );

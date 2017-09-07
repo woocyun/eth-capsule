@@ -224,53 +224,55 @@ class App extends Component {
   }
 
   handleDeposit({ dateValue, timeValue, depositValue }) {
-    this.setState(prevState => ({
-      depositing: true,
-      initialFormValues: Object.assign({}, prevState.initialFormValues, {
-        date: dateValue,
-        time: timeValue,
-        value: depositValue
-      })
-    }));
-
-    const {
-      account,
-      contractInstance,
-      web3
-    } = this.state;
-
-    const selectedDateTime = new Date(moment(dateValue).format('ddd MMM DD YYYY') + ' ' + moment(timeValue).format('HH:mm'));
-    const unlockTimeInSeconds = selectedDateTime.valueOf() / 1000;
-
-    return contractInstance.bury(
-      unlockTimeInSeconds,
-      {
-        from: account,
-        value: web3.toWei(depositValue, 'ether')
-      }
-    )
-      .then(response => {
-        this.setState(prevState => ({
-          depositing: false,
-          initialFormValues: Object.assign({}, prevState.initialFormValues, {
-            date: null,
-            time: null,
-            value: 0
-          })
-        }));
-        this.props.history.push('/');
-      })
-      .catch(error => {
-        this.setState(prevState => ({
-          depositing: false,
-          initialFormValues: Object.assign({}, prevState.initialFormValues, {
-            date: null,
-            time: null,
-            value: 0
-          })
-        }));
-        console.log('handleDeposit caught:', error);
-      });
+    return () => {
+      this.setState(prevState => ({
+        depositing: true,
+        initialFormValues: Object.assign({}, prevState.initialFormValues, {
+          date: dateValue,
+          time: timeValue,
+          value: depositValue
+        })
+      }));
+  
+      const {
+        account,
+        contractInstance,
+        web3
+      } = this.state;
+  
+      const selectedDateTime = new Date(moment(dateValue).format('ddd MMM DD YYYY') + ' ' + moment(timeValue).format('HH:mm'));
+      const unlockTimeInSeconds = selectedDateTime.valueOf() / 1000;
+  
+      return contractInstance.bury(
+        unlockTimeInSeconds,
+        {
+          from: account,
+          value: web3.toWei(depositValue, 'ether')
+        }
+      )
+        .then(response => {
+          this.setState(prevState => ({
+            depositing: false,
+            initialFormValues: Object.assign({}, prevState.initialFormValues, {
+              date: null,
+              time: null,
+              value: 0
+            })
+          }));
+          this.props.history.push('/');
+        })
+        .catch(error => {
+          this.setState(prevState => ({
+            depositing: false,
+            initialFormValues: Object.assign({}, prevState.initialFormValues, {
+              date: null,
+              time: null,
+              value: 0
+            })
+          }));
+          console.log('handleDeposit caught:', error);
+        });
+    };
   }
 
   handleWithdraw(id) {
