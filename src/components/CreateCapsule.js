@@ -11,11 +11,19 @@ class CreateCapsule extends Component {
   constructor(props){
     super(props);
 
+    const {
+      initialFormValues: {
+        date,
+        time,
+        value
+      }
+    } = props;
+
     this.state = {
       formValues: {
-        depositValue: 0,
-        dateValue: null,
-        timeValue: null
+        depositValue: value,
+        dateValue: date,
+        timeValue: time
       },
       dateError: '',
       timeError: '',

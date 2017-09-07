@@ -67,7 +67,7 @@ contract('EthCapsule', accounts => {
     const account = accounts[1];
     const startTime = latestTime();
     const unlockTime = startTime + duration.years(1);
-    const digTime = startTime + duration.years(1) - duration.seconds(1);
+    const digTime = startTime + duration.years(1) - duration.seconds(10);
     const msgValue = ether(1.123);
 
     this.ethcapsule.bury(unlockTime, {

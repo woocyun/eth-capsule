@@ -36,6 +36,11 @@ class App extends Component {
       contractValue: 0,
       depositedValue: 0,
       depositing: false,
+      initialFormValues: {
+        date: null,
+        time: null,
+        value: 0
+      },
       totalCapsules: 0,
       totalValue: 0,
       totalBuriedCapsules: 0,
@@ -219,6 +224,15 @@ class App extends Component {
   }
 
   handleDeposit({ dateValue, timeValue, depositValue }) {
+    this.setState(prevState => ({
+      depositing: true,
+      initialFormValues: Object.assign({}, prevState.initialFormValues, {
+        date: dateValue,
+        time: timeValue,
+        value: depositValue
+      })
+    }));
+
     const {
       account,
       contractInstance,
@@ -236,11 +250,25 @@ class App extends Component {
       }
     )
       .then(response => {
-        this.setState({ depositing: false });
+        this.setState(prevState => ({
+          depositing: false,
+          initialFormValues: Object.assign({}, prevState.initialFormValues, {
+            date: null,
+            time: null,
+            value: 0
+          })
+        }));
         this.props.history.push('/');
       })
       .catch(error => {
-        this.setState({ depositing: false });
+        this.setState(prevState => ({
+          depositing: false,
+          initialFormValues: Object.assign({}, prevState.initialFormValues, {
+            date: null,
+            time: null,
+            value: 0
+          })
+        }));
         console.log('handleDeposit caught:', error);
       });
   }
@@ -303,8 +331,8 @@ class App extends Component {
       capsule,
       capsules,
       capsulesLoading,
-      // contractValue,
       depositing,
+      initialFormValues,
       totalCapsules,
       totalValue,
       totalBuriedCapsules,
@@ -346,6 +374,7 @@ class App extends Component {
     const createComponent = (props) => (
       <CreateCapsule
         onDeposit={handleDeposit}
+        initialFormValues={initialFormValues}
       />
     );
 
