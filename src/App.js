@@ -226,13 +226,13 @@ class App extends Component {
     } = this.state;
 
     const selectedDateTime = new Date(moment(dateValue).format('ddd MMM DD YYYY') + ' ' + moment(timeValue).format('HH:mm'));
-    const unlockTimeInSeconds = selectedDateTime.valueOf();
+    const unlockTimeInSeconds = selectedDateTime.valueOf() / 1000;
 
     return contractInstance.bury(
       unlockTimeInSeconds,
       {
         from: account,
-        value: web3.toWei(depositValue, 'ether'),
+        value: web3.toWei(depositValue, 'ether')
       }
     )
       .then(response => {
