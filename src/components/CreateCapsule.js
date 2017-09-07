@@ -5,6 +5,7 @@ import DatePicker from 'material-ui/DatePicker';
 import TimePicker from 'material-ui/TimePicker';
 import RaisedButton from 'material-ui/RaisedButton';
 import TextField from 'material-ui/TextField';
+import Divider from 'material-ui/Divider';
 
 class CreateCapsule extends Component {
   constructor(props){
@@ -158,6 +159,11 @@ class CreateCapsule extends Component {
               primary={true}
               onClick={this.verifyAndSubmit}
             />
+          </div>
+          <div style={{ fontSize: 11, textAlign: 'left', padding: 30, marginTop: 75 }}>
+            <p>* Current max lock duration is 5 years. Setting the date past 5 years from now will result in a failed transaction.</p>
+            <Divider />
+            <p>* Current min lock duration is 0. Setting the date before the current time will automatically default to a 0 duration, which means your capsule will be immediately available to dig up.</p>
           </div>
         </Sheet>
       </div>

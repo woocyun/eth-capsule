@@ -1,3 +1,5 @@
+const moment = require('moment');
+
 const assertJump = require('./helpers/assertJump');
 const ether = require('./helpers/ether');
 const increaseTime = require('./helpers/increaseTime');
@@ -23,9 +25,10 @@ contract('EthCapsule', accounts => {
   it('should allow user to bury a capsule', function (done) {
     const account = accounts[1];
     const msgValue = ether(1.123);
-    const unlockDuration = duration.seconds(60);
+    const startTime = latestTime();
+    const unlockTime = startTime + duration.minutes(1);
 
-    this.ethcapsule.bury(unlockDuration, {
+    this.ethcapsule.bury(unlockTime, {
       from: account,
       value: msgValue
     })
@@ -43,15 +46,15 @@ contract('EthCapsule', accounts => {
   it('should allow user to dig up a capsule if duration has passed', function (done) {
     const account = accounts[1];
     const startTime = latestTime();
-    const unlockDuration = duration.years(1);
-    const unlockTime = startTime + unlockDuration + duration.minutes(1);
+    const unlockTime = startTime + duration.minutes(1);
+    const digTime = startTime + duration.minutes(2);
     const msgValue = ether(1.123);
 
-    this.ethcapsule.bury(unlockDuration, {
+    this.ethcapsule.bury(unlockTime, {
       from: account,
       value: msgValue
     })
-      .then(() => increaseTimeTo(unlockTime))
+      .then(() => increaseTimeTo(digTime))
       .then(() => this.ethcapsule.dig(1, { from: account }))
       .then(() => this.ethcapsule.getCapsuleInfo(1, { from: account }))
       .then(([value, id, lockTime, unlockTime, withdrawnTime]) => {
@@ -63,15 +66,15 @@ contract('EthCapsule', accounts => {
   it('should prevent user from digging up a capsule if duration has not passed', function (done) {
     const account = accounts[1];
     const startTime = latestTime();
-    const unlockDuration = duration.years(1);
-    const unlockTime = startTime + unlockDuration - duration.minutes(1);
+    const unlockTime = startTime + duration.years(1);
+    const digTime = startTime + duration.years(1) - duration.seconds(1);
     const msgValue = ether(1.123);
 
-    this.ethcapsule.bury(unlockDuration, {
+    this.ethcapsule.bury(unlockTime, {
       from: account,
       value: msgValue
     })
-      .then(() => increaseTimeTo(unlockTime))
+      .then(() => increaseTimeTo(digTime))
       .then(() => this.ethcapsule.dig(1, { from: account }))
       .then(() => {
         assert.fail('should have thrown before');
@@ -84,9 +87,10 @@ contract('EthCapsule', accounts => {
   it('should prevent users from burying with a duration over the max duration', function (done) {
     const account = accounts[1];
     const msgValue = ether(1.123);
-    const unlockDuration = DEFAULT_MAX_DURATION + 1;
+    const startTime = latestTime();
+    const unlockTime = startTime + DEFAULT_MAX_DURATION + duration.seconds(1);
 
-    this.ethcapsule.bury(unlockDuration, {
+    this.ethcapsule.bury(unlockTime, {
       from: account,
       value: msgValue
     })
@@ -98,20 +102,24 @@ contract('EthCapsule', accounts => {
       });
   });
 
-  it('should prevent users from burying with a duration below the min duration', function (done) {
+  it('should allow user to bury with a duration below the min duration, but unlockTime should equal lockTime', function (done) {
     const account = accounts[1];
     const msgValue = ether(1.123);
-    const unlockDuration = DEFAULT_MIN_DURATION - 1;
+    const startTime = latestTime();
+    const unlockTime = startTime + DEFAULT_MIN_DURATION - 1;
 
-    this.ethcapsule.bury(unlockDuration, {
+    this.ethcapsule.bury(unlockTime, {
       from: account,
       value: msgValue
     })
       .then(() => {
-        assert.fail('should have thrown before');
-      }, error => {
-        assertJump(error);
-        done();
+        this.ethcapsule.getCapsuleInfo(1, {
+          from: account
+        })
+          .then(([value, id, lockTime, unlockTime, withdrawnTime]) => {
+            assert.equal(lockTime.toNumber(), unlockTime.toNumber());
+            done();
+          });;
       });
   });
 
@@ -119,8 +127,10 @@ contract('EthCapsule', accounts => {
     const account = accounts[1];
     const msgValue = DEFAULT_MIN_DEPOSIT - ether(0.00001);
     const unlockDuration = duration.seconds(60);
+    const startTime = latestTime();
+    const unlockTime = startTime + duration.seconds(1);
 
-    this.ethcapsule.bury(unlockDuration, {
+    this.ethcapsule.bury(unlockTime, {
       from: account,
       value: msgValue
     })

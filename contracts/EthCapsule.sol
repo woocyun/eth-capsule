@@ -26,11 +26,14 @@ contract EthCapsule is Ownable {
   uint public totalValue;
   uint public totalBuriedCapsules;
 
-  function bury(uint duration) payable {
+  function bury(uint unlockTime) payable {
     require(msg.value >= minDeposit);
-    require(duration >= minDuration);
-    require(duration <= maxDuration);
-    
+    require(unlockTime <= block.timestamp + maxDuration);
+
+    if (unlockTime < block.timestamp + minDuration) {
+      unlockTime = SafeMath.add(block.timestamp, minDuration);
+    }
+
     if (depositors[msg.sender].numCapsules <= 0) {
         depositors[msg.sender] = Depositor({ numCapsules: 0 });
     }
@@ -42,7 +45,7 @@ contract EthCapsule is Ownable {
         value: msg.value,
         id: depositors[msg.sender].numCapsules,
         lockTime: block.timestamp,
-        unlockTime: SafeMath.add(block.timestamp, duration),
+        unlockTime: unlockTime,
         withdrawnTime: 0
     });
 
