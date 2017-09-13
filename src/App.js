@@ -18,8 +18,9 @@ import Capsules from './components/Capsules.js';
 import CapsuleItem from './components/CapsuleItem.js';
 import CreateCapsule from './components/CreateCapsule';
 import CommunityStats from './components/CommunityStats';
-import Instructions from './components/Instructions';
+import FAQ from './components/FAQ';
 import Loading from './components/Loading';
+import Snackbar from 'material-ui/Snackbar';
 
 const VIEW_PATH = '/view/';
 
@@ -41,6 +42,9 @@ class App extends Component {
         time: null,
         value: 0
       },
+      networkValid: true,
+      snackbarMessage: 'OK',
+      snackbarOpen: false,
       totalCapsules: 0,
       totalValue: 0,
       totalBuriedCapsules: 0,
@@ -63,13 +67,17 @@ class App extends Component {
     this.getTotalBuriedValue = this.getTotalBuriedValue.bind(this);
     this.handleCapsuleSelect = this.handleCapsuleSelect.bind(this);
     this.handleDeposit = this.handleDeposit.bind(this);
+    this.handleSnackbarClose = this.handleSnackbarClose.bind(this);
+    this.handleSnackbarOpen = this.handleSnackbarOpen.bind(this);
     this.handleWithdraw = this.handleWithdraw.bind(this);
     this.ifOnViewPage = this.ifOnViewPage.bind(this);
     this.ifReloadedOnViewPage = this.ifReloadedOnViewPage.bind(this);
+    this.checkNetwork = this.checkNetwork.bind(this);
   }
 
   componentDidMount() {
     this.getWeb3()
+      .then(this.checkNetwork)
       .then(this.getAccounts)
       .then(this.instantiateContract)
       .then(this.getNumberOfCapsules)
@@ -99,11 +107,28 @@ class App extends Component {
     });
   }
 
+  checkNetwork() {
+    return new Promise((resolve, reject) => {
+      this.state.web3.version.getNetwork((err, networkId) => {
+        if (err) {
+          reject(err);
+        } else {
+          if (networkId !== '42' && networkId !== '1') {
+            this.setState({ networkValid: false });
+          }
+
+          resolve(networkId);
+        }
+      });
+    });
+  }
+
   getWeb3() {
     return getWeb3
       .then(({ web3 }) => {
         window.web3 = web3;
         this.setState({ web3 });
+        return web3;
       })
       .catch(err => {
         console.log('Error finding web3.');
@@ -259,27 +284,42 @@ class App extends Component {
               value: 0
             })
           }));
+
           this.props.history.push('/');
+          this.handleSnackbarOpen(`Successfully buried ${depositValue} ethers until ` + (timeValue ? moment(timeValue).format('hh:mm A') : '') + ' on ' + (dateValue ? moment(dateValue).format('MMMM Do, YYYY') : ''));
         })
         .catch(error => {
           this.setState(prevState => ({
-            depositing: false,
-            initialFormValues: Object.assign({}, prevState.initialFormValues, {
-              date: null,
-              time: null,
-              value: 0
-            })
+            depositing: false
           }));
-          console.log('handleDeposit caught:', error);
+
+          this.handleSnackbarOpen('' + error);
         });
     };
+  }
+  
+  handleSnackbarClose() {
+    this.setState({
+      snackbarOpen: false
+    });
+  }
+
+  handleSnackbarOpen(message) {
+    this.setState({
+      snackbarOpen: true,
+      snackbarMessage: message
+    });
   }
 
   handleWithdraw(id) {
     const {
       account,
-      contractInstance
+      contractInstance,
+      capsules,
+      web3
     } = this.state;
+
+    const capsule = capsules.find(capsule => capsule.id === id);
 
     return () => {
       this.setState({ withdrawing: true });
@@ -288,13 +328,13 @@ class App extends Component {
         from: account
       })
         .then(response => {
-          // console.log(response);
           this.setState({ withdrawing: false });
           this.props.history.push('/');
+          this.handleSnackbarOpen(`Successfully withdrew ${web3.fromWei(capsule.value, 'ether').toString()} ethers from Capsule ${capsule.id}`);
         })
         .catch(error => {
           this.setState({ withdrawing: false });
-          console.log('handleWithdraw caught:', error);
+          this.handleSnackbarOpen('' + error);
         });
     };
   }
@@ -335,6 +375,9 @@ class App extends Component {
       capsulesLoading,
       depositing,
       initialFormValues,
+      networkValid,
+      snackbarMessage,
+      snackbarOpen,
       totalCapsules,
       totalValue,
       totalBuriedCapsules,
@@ -348,6 +391,7 @@ class App extends Component {
     const {
       handleCapsuleSelect,
       handleDeposit,
+      handleSnackbarClose,
       handleWithdraw
     } = this;
 
@@ -380,8 +424,8 @@ class App extends Component {
       />
     );
 
-    const instructionsComponent = (props) => (
-      <Instructions
+    const faqComponent = (props) => (
+      <FAQ
       />
     );
 
@@ -393,17 +437,17 @@ class App extends Component {
             titleStyle={{ fontWeight: 100 }}
             iconStyleLeft={{ display: 'none' }}
           />
-          <Paper style={{ maxWidth: 1000, margin: '40px auto', position: 'relative' }}>
+          <Paper className="main-paper" style={{ maxWidth: 1000, margin: '40px auto', position: 'relative' }}>
             <HeadToolbar />
             <Route exact path="/" component={capsulesComponent} />
             <Route path="/view/:id" component={capsuleItemComponent} />
             <Route path="/create" component={createComponent} />
-            <Route path="/instructions" component={instructionsComponent} />
+            <Route path="/faq" component={faqComponent} />
             {(depositing || withdrawing) &&
               <Loading />
             }
           </Paper>
-          <Paper style={{ maxWidth: 1000, margin: '40px auto' }}>
+          <Paper className="secondary-paper" style={{ maxWidth: 1000, margin: '40px auto' }}>
             <CommunityStats
               totalCapsules={totalCapsules}
               totalValue={totalValue}
@@ -412,6 +456,35 @@ class App extends Component {
               web3={web3}
             />
           </Paper>
+          <Snackbar
+            open={snackbarOpen}
+            message={snackbarMessage}
+            autoHideDuration={4000}
+            onRequestClose={handleSnackbarClose}
+          />
+          {networkValid ||
+            <div
+              style={{
+                position: 'fixed',
+                top: 64,
+                left: 0,
+                bottom: 0,
+                right: 0,
+                backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                color: '#fff',
+                padding: '10%',
+                textAlign: 'center',
+                zIndex: 100
+              }}
+            >
+              <h2>
+                Eth Capsule is deployed on the main Ethereum network and the Kovan test network.
+              </h2>
+              <h2>
+                Please configure your Dapp browser to connect to one of these networks in order to use Eth Capsule.
+              </h2>
+            </div>
+          }
         </div>
       </MuiThemeProvider>
     );

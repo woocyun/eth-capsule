@@ -199,9 +199,9 @@ class CreateCapsule extends Component {
             />
           </div>
           <div style={{ fontSize: 11, textAlign: 'left', padding: 30, marginTop: 75 }}>
-            <p>* Current max lock duration is 5 years. Setting the date past 5 years from now will result in a failed transaction.</p>
+            <p>* Current maximum lock duration is 5 years. Setting the date past 5 years from now will result in a failed transaction.</p>
             <Divider />
-            <p>* Current min lock duration is 0. Setting the date before the current time will automatically default to a 0 duration, which means your capsule will be immediately available to dig up.</p>
+            <p>* There is no minimum lock duration. Setting the date to before the current time will automatically default to a 0 duration, which means your capsule will be immediately available to dig up.</p>
           </div>
           <Dialog
             actions={actions}
@@ -209,7 +209,7 @@ class CreateCapsule extends Component {
             open={dialogOpen}
             onRequestClose={closeSummaryModal}
           >
-            Bury {depositValue} ether until {timeValue ? moment(timeValue).format('HH:mm A') : '' } on {dateValue ? moment(dateValue).format('MMMM Do, YYYY') : ''}?
+            Bury {depositValue} ether until {timeValue ? moment(timeValue).format('hh:mm A') : '' } on {dateValue ? moment(dateValue).format('MMMM Do, YYYY') : ''}?
           </Dialog>
         </Sheet>
       </div>

@@ -7,6 +7,8 @@ import IconMenu from 'material-ui/IconMenu';
 import IconButton from 'material-ui/IconButton';
 import NavigationExpandMoreIcon from 'material-ui/svg-icons/navigation/expand-more';
 
+const CONTRACT_URL = 'https://etherscan.io/address/0x5274a2293dbe075a82d41e873bb927403a9dce46#code';
+
 const MatchText = ({ match }) => {
   let text;
 
@@ -20,8 +22,8 @@ const MatchText = ({ match }) => {
     case '/create':
       text = 'Bury a Capsule';
       break;
-    case '/instructions':
-      text = 'Instructions';
+    case '/faq':
+      text = 'FAQ';
       break;
     default:
       text = '';
@@ -39,7 +41,7 @@ const HeadToolbar = (props) => {
           <Route exact path="/" component={MatchText} />
           <Route path="/view" component={MatchText} />
           <Route path="/create" component={MatchText} />
-          <Route path="/instructions" component={MatchText} />
+          <Route path="/faq" component={MatchText} />
         </h3>
       </ToolbarGroup>
       <ToolbarGroup>
@@ -61,11 +63,16 @@ const HeadToolbar = (props) => {
             </Link>
           }/>
           <MenuItem primaryText={
-            <Link to="/instructions">
-              Instructions
+            <Link to="/faq">
+              FAQ
             </Link>
           }/>
-          <MenuItem primaryText="Contract" />
+          <MenuItem
+            primaryText="Contract"
+            onClick={() => {
+              window.open(CONTRACT_URL);
+            }}
+          />
         </IconMenu>
       </ToolbarGroup>
     </Toolbar>

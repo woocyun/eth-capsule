@@ -2,7 +2,7 @@ import React from 'react';
 
 import Divider from 'material-ui/Divider';
 
-const Instructions = () => {
+const FAQ = () => {
   return (
     <div style={{ padding: '5px 20px 10px'}}>
       <p className="question">
@@ -12,6 +12,15 @@ const Instructions = () => {
         Click on the down arrow on top right toolbar and select "Bury a Capsule".
         Fill in the date and time that you would like to bury your Ether until.
         Press the "Bury" button to initiate transaction with MetaMask.
+      </p>
+      <Divider />
+      <p className="question">
+        How do I dig up an Eth capsule?
+      </p>
+      <p className="answer">
+        Click on the capsule you want to dig up from the main "Capsules" menu.
+        If your capsule is ready to be dug, there will be a blue "Open" button
+        you can click to unlock and receive the ether contained in the capsule.
       </p>
       <Divider />
       <p className="question">
@@ -34,13 +43,8 @@ const Instructions = () => {
       <p className="answer">
         This was a beginner's project to learn how to create a Dapp, so use at your own risk!
       </p>
-      {/* <p className="question">Click on the down arrow on top right toolbar and select "Bury a Capsule".</p>
-      <p>Fill in the date and time that you would like to bury your Ether until.</p>
-      <p>Press the "Bury" button to initiate transaction. (Warning: You will not be able to retrieve your buried Ether until the date/time that you've specified!)</p>
-      <p>You can bury multiple capsules and keep track of them on the main page.</p>
-      <p>Apart from the gas you pay for your transactions, there are no other fees incurred for using this service.</p> */}
     </div>
   );
 };
 
-export default Instructions;
+export default FAQ;
